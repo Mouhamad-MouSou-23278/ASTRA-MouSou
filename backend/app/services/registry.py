@@ -110,6 +110,8 @@ def build_snapshot(db: Session, astronaut_id: Optional[int]) -> dict:
         prof = default_profile(s)
         sensors.append({
             "key": s.key, "name": s.name, "category": s.category, "unit": s.unit,
+            "sensor_family": getattr(s, "sensor_family", "generic"),
+            "technical_specs": getattr(s, "technical_specs", {}),
             "channel": s.channel, "min_valid": s.min_valid, "max_valid": s.max_valid,
             "accuracy": s.accuracy, "max_rate_per_min": s.max_rate_per_min,
             "resolution": s.resolution, "version": s.version,

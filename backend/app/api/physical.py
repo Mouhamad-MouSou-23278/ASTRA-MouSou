@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from astra_sim import CHANNELS
@@ -27,6 +27,7 @@ from ..schemas import (
     ProfileIn,
     ProfileOut,
     SensorCreate,
+    SensorDuplicateIn,
     SensorOut,
     SensorStatusIn,
     SensorUpdate,
@@ -125,17 +126,146 @@ def _record_version(db: Session, sensor: Sensor, user: User, note: str) -> None:
 
 
 @router.get("/sensors", response_model=list[SensorOut])
-def list_sensors(status_filter: Optional[str] = None, db: Session = Depends(get_db),
-                 _: User = Depends(reader)):
-    stmt = select(Sensor).options(selectinload(Sensor.profiles)).order_by(Sensor.category, Sensor.id)
+def list_sensors(
+    status_filter: Optional[str] = None,
+    category: Optional[str] = None,
+    family: Optional[str] = None,
+    search: Optional[str] = None,
+    tag: Optional[str] = None,
+    sort_by: Optional[str] = None,
+    sort_desc: bool = False,
+    db: Session = Depends(get_db),
+    _: User = Depends(reader),
+):
+    stmt = select(Sensor).options(selectinload(Sensor.profiles))
     if status_filter:
         stmt = stmt.where(Sensor.status == status_filter)
-    return list(db.scalars(stmt))
+    if category:
+        stmt = stmt.where(Sensor.category == category)
+    if family:
+        stmt = stmt.where(Sensor.sensor_family == family)
+    if search:
+        term = f"%{search.strip().lower()}%"
+        stmt = stmt.where(
+            (func.lower(Sensor.name).like(term))
+            | (func.lower(Sensor.key).like(term))
+            | (func.lower(Sensor.description).like(term))
+            | (func.lower(Sensor.manufacturer).like(term))
+            | (func.lower(Sensor.model_number).like(term))
+        )
+
+    if sort_by == "name":
+        stmt = stmt.order_by(Sensor.name.desc() if sort_desc else Sensor.name.asc())
+    elif sort_by == "updated_at":
+        stmt = stmt.order_by(Sensor.updated_at.desc() if sort_desc else Sensor.updated_at.asc())
+    elif sort_by == "version":
+        stmt = stmt.order_by(Sensor.version.desc() if sort_desc else Sensor.version.asc())
+    else:
+        stmt = stmt.order_by(Sensor.category, Sensor.id)
+
+    results = list(db.scalars(stmt))
+    if tag:
+        tag_lower = tag.strip().lower()
+        results = [s for s in results if tag_lower in [t.lower() for t in (s.tags or [])]]
+    return results
 
 
 @router.get("/sensors/{sensor_id}", response_model=SensorOut)
 def get_sensor(sensor_id: int, db: Session = Depends(get_db), _: User = Depends(reader)):
     return _load(db, sensor_id)
+
+
+@router.post("/sensors/{sensor_id}/duplicate", response_model=SensorOut, status_code=201)
+def duplicate_sensor(
+    sensor_id: int,
+    payload: Optional[SensorDuplicateIn] = None,
+    db: Session = Depends(get_db),
+    user: User = Depends(writer),
+):
+    src = _load(db, sensor_id)
+    if payload is None:
+        payload = SensorDuplicateIn()
+
+    if payload.new_key:
+        new_key = payload.new_key
+    else:
+        base_key = f"{src.key}_copy"
+        new_key = base_key
+        counter = 1
+        while db.scalar(select(Sensor).where(Sensor.key == new_key)):
+            counter += 1
+            new_key = f"{base_key}_{counter}"
+
+    if db.scalar(select(Sensor).where(Sensor.key == new_key)):
+        raise HTTPException(status.HTTP_409_CONFLICT, f"Sensor key '{new_key}' already exists")
+
+    new_name = payload.new_name or f"{src.name} (Copy)"
+    new_sensor = Sensor(
+        key=new_key,
+        name=new_name,
+        category=src.category,
+        sensor_family=src.sensor_family,
+        manufacturer=src.manufacturer,
+        model_number=src.model_number,
+        tags=list(src.tags or []),
+        unit=src.unit,
+        channel=src.channel,
+        description=src.description,
+        min_valid=src.min_valid,
+        max_valid=src.max_valid,
+        accuracy=src.accuracy,
+        max_rate_per_min=src.max_rate_per_min,
+        resolution=src.resolution,
+        status="draft",
+        version=1,
+        technical_specs=dict(src.technical_specs or {}),
+        custom_fields=dict(src.custom_fields or {}),
+        updated_by=user.username,
+    )
+    for p in src.profiles:
+        new_sensor.profiles.append(
+            SimulationProfile(
+                name=p.name,
+                is_default=p.is_default,
+                baseline=p.baseline,
+                bias=p.bias,
+                noise_std=p.noise_std,
+                drift_per_min=p.drift_per_min,
+                spike_probability=p.spike_probability,
+                spike_magnitude=p.spike_magnitude,
+                stuck_probability=p.stuck_probability,
+                stuck_duration_s=p.stuck_duration_s,
+                dropout_probability=p.dropout_probability,
+                dropout_duration_s=p.dropout_duration_s,
+                notes=p.notes,
+            )
+        )
+    if not new_sensor.profiles:
+        new_sensor.profiles.append(
+            SimulationProfile(name="nominal", is_default=True, noise_std=src.accuracy)
+        )
+
+    db.add(new_sensor)
+    db.flush()
+    db.add(
+        SensorVersion(
+            sensor_id=new_sensor.id,
+            version=1,
+            snapshot=sensor_snapshot(new_sensor),
+            change_note=payload.change_note or f"Duplicated from {src.key}",
+            changed_by=user.username,
+        )
+    )
+    audit(
+        db,
+        user,
+        "sensor.duplicate",
+        "sensor",
+        new_sensor.id,
+        {"from_key": src.key, "new_key": new_sensor.key},
+    )
+    commit_or_409(db, "Sensor")
+    return _load(db, new_sensor.id)
 
 
 @router.post("/sensors", response_model=SensorOut, status_code=201)

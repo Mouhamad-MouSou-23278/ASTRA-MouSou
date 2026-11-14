@@ -29,6 +29,7 @@ from .security import hash_password
 SENSOR_SNAPSHOT_FIELDS = (
     "key", "name", "category", "unit", "channel", "description", "min_valid", "max_valid",
     "accuracy", "max_rate_per_min", "resolution", "status", "custom_fields",
+    "sensor_family", "manufacturer", "model_number", "technical_specs", "tags",
 )
 
 
