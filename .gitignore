@@ -25,3 +25,6 @@ backend/.env
 Thumbs.db
 .vscode/
 .idea/
+
+# Old local virtual environment
+backend/.venv_old/
