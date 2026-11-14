@@ -64,6 +64,11 @@ def _migrate_tables(eng: Engine) -> None:
         ("model_number", "VARCHAR(80) DEFAULT ''"),
         ("technical_specs", "JSON DEFAULT '{}'"),
         ("tags", "JSON DEFAULT '[]'"),
+        ("io_contract", "JSON DEFAULT '{}'"),
+        ("placement_data", "JSON DEFAULT '{}'"),
+        ("physics_config", "JSON DEFAULT '{}'"),
+        ("error_configs", "JSON DEFAULT '[]'"),
+        ("environmental_sensitivities", "JSON DEFAULT '[]'"),
     ]
     with eng.begin() as conn:
         for col_name, col_type in new_cols:
