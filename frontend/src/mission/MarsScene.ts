@@ -15,7 +15,7 @@ import type { AstronautState, Frame, TerrainMeta, TimelineData, WorldData } from
  * changes are local to this browser and never reach the server.
  */
 
-export type CameraMode = "third" | "first" | "overview" | "closeup";
+export type CameraMode = "third" | "first" | "overview" | "closeup" | "rover" | "ingenuity";
 export type Quality = "high" | "low";
 
 const HORIZON = new THREE.Color(0xd9a57c);
@@ -252,6 +252,15 @@ class Astronaut {
     this.head.add(mesh(new THREE.SphereGeometry(0.23, 24, 18), suit));
     this.head.add(mesh(new THREE.SphereGeometry(0.2, 24, 18, 0, Math.PI * 2, 0, Math.PI * 0.62), visor, 0, 0.0, 0.07));
     this.head.children[1].rotation.x = Math.PI / 2;
+
+    // NASA Spacesuit Helmet Headlamp Spotlight
+    const headlamp = new THREE.SpotLight(0xfffaec, 2.5, 38, Math.PI / 5, 0.45, 1.2);
+    headlamp.position.set(0, 0.12, 0.22);
+    const lampTarget = new THREE.Object3D();
+    lampTarget.position.set(0, -0.4, 6.0);
+    this.head.add(headlamp, lampTarget);
+    headlamp.target = lampTarget;
+
     this.torso.add(this.head);
 
     // arms
@@ -326,6 +335,202 @@ class Astronaut {
   }
 }
 
+/** NASA Mars 2020 Perseverance Rover procedural 3D model */
+class PerseveranceRover {
+  readonly root = new THREE.Group();
+  private mast = new THREE.Group();
+  private wheels: THREE.Mesh[] = [];
+
+  constructor(envMap: THREE.Texture | null) {
+    const white = new THREE.MeshStandardMaterial({ color: 0xefede8, roughness: 0.65 });
+    const gold = new THREE.MeshStandardMaterial({ color: 0xd4aa3c, roughness: 0.35, metalness: 0.85, envMap, envMapIntensity: 1.2 });
+    const dark = new THREE.MeshStandardMaterial({ color: 0x24282f, roughness: 0.75, metalness: 0.6 });
+    const wheelMat = new THREE.MeshStandardMaterial({ color: 0x1a1c20, roughness: 0.85, metalness: 0.4 });
+    const lens = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.1, metalness: 0.9, envMap });
+
+    const mesh = (geo: THREE.BufferGeometry, mat: THREE.Material, x = 0, y = 0, z = 0) => {
+      const m = new THREE.Mesh(geo, mat);
+      m.position.set(x, y, z);
+      m.castShadow = m.receiveShadow = true;
+      return m;
+    };
+
+    // Main Chassis
+    const chassis = mesh(new THREE.BoxGeometry(1.6, 0.6, 2.2), white, 0, 0.7, 0);
+    this.root.add(chassis);
+
+    // MMRTG (Radioisotope Thermoelectric Generator at rear)
+    const rtg = mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.8, 12), dark, 0, 0.9, -1.3);
+    rtg.rotation.x = Math.PI / 4;
+    this.root.add(rtg);
+
+    // High Gain Antenna (Hexagonal Dish)
+    const hga = mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.05, 6), white, 0.45, 1.15, -0.4);
+    hga.rotation.x = 0.3;
+    this.root.add(hga);
+
+    // Remote Sensing Mast (RSM)
+    this.mast.position.set(-0.5, 1.0, 0.8);
+    const mastPole = mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.2, 8), dark, 0, 0.6, 0);
+    const mastHead = mesh(new THREE.BoxGeometry(0.28, 0.22, 0.25), white, 0, 1.25, 0);
+    const superCamLens = mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.12, 12), lens, 0, 1.25, 0.14);
+    superCamLens.rotation.x = Math.PI / 2;
+    this.mast.add(mastPole, mastHead, superCamLens);
+    this.root.add(this.mast);
+
+    // Robotic Arm (with drill turret & PIXL/SHERLOC instruments)
+    const armGroup = new THREE.Group();
+    armGroup.position.set(0.55, 0.65, 1.0);
+    const arm1 = mesh(new THREE.BoxGeometry(0.08, 0.08, 0.6), dark, 0, 0, 0.3);
+    const turret = mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.22, 12), gold, 0, -0.15, 0.6);
+    armGroup.add(arm1, turret);
+    this.root.add(armGroup);
+
+    // 6-Wheel Rocker-Bogie Suspension
+    const wheelGeo = new THREE.CylinderGeometry(0.26, 0.26, 0.22, 16);
+    const wheelOffsets: [number, number, number][] = [
+      [-0.95, 0.26, 0.9],
+      [0.95, 0.26, 0.9],
+      [-1.05, 0.26, 0.0],
+      [1.05, 0.26, 0.0],
+      [-0.95, 0.26, -0.9],
+      [0.95, 0.26, -0.9],
+    ];
+    for (const [wx, wy, wz] of wheelOffsets) {
+      const w = mesh(wheelGeo, wheelMat, wx, wy, wz);
+      w.rotation.z = Math.PI / 2;
+      this.wheels.push(w);
+      this.root.add(w);
+    }
+  }
+
+  animate(clock: number): void {
+    this.mast.rotation.y = Math.sin(clock * 0.45) * 0.4;
+  }
+}
+
+/** NASA Ingenuity Mars Helicopter (Ginny) procedural 3D model */
+class IngenuityHelicopter {
+  readonly root = new THREE.Group();
+  private rotorTop = new THREE.Group();
+  private rotorBottom = new THREE.Group();
+  isFlying = true;
+
+  constructor() {
+    const dark = new THREE.MeshStandardMaterial({ color: 0x1f2329, roughness: 0.8 });
+    const solarMat = new THREE.MeshStandardMaterial({ color: 0x1a284e, roughness: 0.3, metalness: 0.8 });
+    const bladeMat = new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.6, metalness: 0.7 });
+    const gold = new THREE.MeshStandardMaterial({ color: 0xc89d38, roughness: 0.4, metalness: 0.85 });
+
+    const mesh = (geo: THREE.BufferGeometry, mat: THREE.Material, x = 0, y = 0, z = 0) => {
+      const m = new THREE.Mesh(geo, mat);
+      m.position.set(x, y, z);
+      m.castShadow = true;
+      return m;
+    };
+
+    // Fuselage
+    const body = mesh(new THREE.BoxGeometry(0.2, 0.2, 0.2), gold, 0, 0.3, 0);
+    this.root.add(body);
+
+    // Solar Panel on top
+    const solar = mesh(new THREE.BoxGeometry(0.3, 0.015, 0.16), solarMat, 0, 0.72, 0);
+    this.root.add(solar);
+
+    // Mast
+    const mast = mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.45, 8), dark, 0, 0.5, 0);
+    this.root.add(mast);
+
+    // 4 Carbon-Composite Landing Legs
+    for (let i = 0; i < 4; i++) {
+      const angle = (i * Math.PI) / 2 + Math.PI / 4;
+      const leg = mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.42, 6), dark, Math.cos(angle) * 0.18, 0.14, Math.sin(angle) * 0.18);
+      leg.rotation.z = Math.cos(angle) * 0.55;
+      leg.rotation.x = Math.sin(angle) * -0.55;
+      this.root.add(leg);
+    }
+
+    // Coaxial Counter-Rotating Blades
+    const bladeGeo = new THREE.BoxGeometry(1.1, 0.008, 0.06);
+    this.rotorBottom.position.y = 0.52;
+    this.rotorBottom.add(mesh(bladeGeo, bladeMat));
+    this.rotorTop.position.y = 0.64;
+    this.rotorTop.add(mesh(bladeGeo, bladeMat));
+
+    this.root.add(this.rotorBottom, this.rotorTop);
+  }
+
+  animate(dt: number, clock: number): void {
+    if (this.isFlying) {
+      this.rotorBottom.rotation.y += dt * 40;
+      this.rotorTop.rotation.y -= dt * 40;
+      this.root.position.y += Math.sin(clock * 3.2) * 0.003;
+    }
+  }
+}
+
+/** Mars Jezero Dust Devil Particle Vortex */
+class DustDevilVortex {
+  readonly root = new THREE.Group();
+  private points: THREE.Points;
+  private velocities: Float32Array;
+
+  constructor() {
+    const count = 350;
+    const geo = new THREE.BufferGeometry();
+    const pos = new Float32Array(count * 3);
+    const colors = new Float32Array(count * 3);
+    this.velocities = new Float32Array(count * 3);
+
+    for (let i = 0; i < count; i++) {
+      const h = Math.random() * 45;
+      const radius = 0.6 + (h / 45) * 6.0;
+      const angle = Math.random() * Math.PI * 2;
+
+      pos[i * 3] = Math.cos(angle) * radius;
+      pos[i * 3 + 1] = h;
+      pos[i * 3 + 2] = Math.sin(angle) * radius;
+
+      const c = 0.75 + Math.random() * 0.25;
+      colors[i * 3] = c;
+      colors[i * 3 + 1] = c * 0.6;
+      colors[i * 3 + 2] = c * 0.4;
+
+      this.velocities[i * 3] = angle;
+      this.velocities[i * 3 + 1] = 2.5 + Math.random() * 4.5;
+      this.velocities[i * 3 + 2] = radius;
+    }
+
+    geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+
+    const mat = new THREE.PointsMaterial({
+      size: 0.42,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.55,
+      fog: true,
+    });
+
+    this.points = new THREE.Points(geo, mat);
+    this.root.add(this.points);
+  }
+
+  animate(dt: number): void {
+    const pos = this.points.geometry.attributes.position as THREE.BufferAttribute;
+    for (let i = 0; i < pos.count; i++) {
+      let angle = this.velocities[i * 3] + dt * 6.5;
+      this.velocities[i * 3] = angle;
+      let y = pos.getY(i) + this.velocities[i * 3 + 1] * dt;
+      if (y > 45) y = 0.3;
+      const radius = 0.6 + (y / 45) * 6.0;
+
+      pos.setXYZ(i, Math.cos(angle) * radius, y, Math.sin(angle) * radius);
+    }
+    pos.needsUpdate = true;
+  }
+}
+
 export interface SceneOptions {
   terrain: TerrainMeta;
   world: WorldData;
@@ -372,6 +577,8 @@ export class MarsScene {
     first: { yaw: 0, pitch: -0.04, dist: 0 },
     overview: { yaw: 0.7, pitch: 0.85, dist: 200 },
     closeup: { yaw: 2.55, pitch: 0.1, dist: 3.4 },
+    rover: { yaw: 0.6, pitch: 0.35, dist: 5.5 },
+    ingenuity: { yaw: 0.2, pitch: 0.45, dist: 3.8 },
   };
   private camPos = new THREE.Vector3(12, 6, 12);
   private camTarget = new THREE.Vector3();
@@ -386,6 +593,9 @@ export class MarsScene {
   private stormMode: "clear" | "hazy" | "storm" = "clear";
   private instrumentsGroup = new THREE.Group();
   private contourMesh?: THREE.LineSegments;
+  private rover!: PerseveranceRover;
+  private helicopter!: IngenuityHelicopter;
+  private dustDevil!: DustDevilVortex;
 
   constructor(private canvas: HTMLCanvasElement, private opts: SceneOptions) {
     this.quality = opts.quality;
@@ -440,6 +650,43 @@ export class MarsScene {
     this.buildMarkers();
     this.buildAtmosphericDust();
     this.buildScientificInstruments();
+
+    // NASA Mars 2020 Perseverance Rover
+    const l = this.opts.world.lander;
+    this.rover = new PerseveranceRover(this.envMap);
+    const roverX = l.x - 17.5, roverY = l.y + 14.0;
+    const roverGround = this.heightAt(roverX, roverY);
+    this.rover.root.position.set(roverX, roverGround, -roverY);
+    this.rover.root.rotation.y = 0.85;
+    const roverLabel = labelSprite("NASA Perseverance Rover", "#ffffff");
+    roverLabel.position.set(roverX, roverGround + 2.5, -roverY);
+    this.scene.add(this.rover.root, roverLabel);
+
+    // NASA Titanium Sample Caching Tube
+    const tubeGeo = new THREE.CylinderGeometry(0.03, 0.03, 0.25, 12);
+    const tubeMat = new THREE.MeshStandardMaterial({ color: 0xe0b246, metalness: 0.9, roughness: 0.2, envMap: this.envMap });
+    const tube = new THREE.Mesh(tubeGeo, tubeMat);
+    tube.rotation.z = Math.PI / 2;
+    tube.position.set(roverX + 1.4, this.heightAt(roverX + 1.4, roverY + 0.6) + 0.04, -(roverY + 0.6));
+    const tubeLabel = labelSprite("NASA Sample Tube #04", "#ffd276");
+    tubeLabel.position.set(roverX + 1.4, this.heightAt(roverX + 1.4, roverY + 0.6) + 0.6, -(roverY + 0.6));
+    this.scene.add(tube, tubeLabel);
+
+    // NASA Ingenuity Mars Helicopter (hovering reconnaissance view)
+    this.helicopter = new IngenuityHelicopter();
+    const heliX = l.x - 24.0, heliY = l.y + 22.0;
+    const heliGround = this.heightAt(heliX, heliY);
+    this.helicopter.root.position.set(heliX, heliGround + 3.2, -heliY);
+    const heliLabel = labelSprite("NASA Ingenuity Helicopter", "#9fe8ff");
+    heliLabel.position.set(heliX, heliGround + 4.2, -heliY);
+    this.scene.add(this.helicopter.root, heliLabel);
+
+    // Jezero Basin Dust Devil Vortex
+    this.dustDevil = new DustDevilVortex();
+    const devilX = l.x + 95.0, devilY = l.y + 115.0;
+    this.dustDevil.root.position.set(devilX, this.heightAt(devilX, devilY), -devilY);
+    this.scene.add(this.dustDevil.root);
+
     this.astronaut = new Astronaut(this.envMap);
     this.scene.add(this.astronaut.root, this.locator);
     this.astronaut.root.visible = false;
@@ -504,8 +751,28 @@ export class MarsScene {
     this.sky = new THREE.Mesh(geo, mat);
     this.sky.renderOrder = -1;
     this.sky.frustumCulled = false;
+
+    // Mars Moon 1: Phobos (triaxial asteroid shape)
+    const phobosGeo = new THREE.DodecahedronGeometry(45, 1);
+    const pPos = phobosGeo.attributes.position as THREE.BufferAttribute;
+    for (let i = 0; i < pPos.count; i++) {
+      pPos.setXYZ(i, pPos.getX(i) * 1.35, pPos.getY(i) * 0.9, pPos.getZ(i) * 1.15);
+    }
+    phobosGeo.computeVertexNormals();
+    const phobosMat = new THREE.MeshBasicMaterial({ color: 0xb5aba2, fog: false });
+    const phobos = new THREE.Mesh(phobosGeo, phobosMat);
+    phobos.position.set(1600, 2400, -3200);
+    this.sky.add(phobos);
+
+    // Mars Moon 2: Deimos (small orbital point)
+    const deimosGeo = new THREE.SphereGeometry(18, 8, 8);
+    const deimosMat = new THREE.MeshBasicMaterial({ color: 0xd4ccc4, fog: false });
+    const deimos = new THREE.Mesh(deimosGeo, deimosMat);
+    deimos.position.set(-2400, 3100, -2600);
+    this.sky.add(deimos);
+
     this.scene.add(this.sky);
-    this.disposables.push(geo, mat);
+    this.disposables.push(geo, mat, phobosGeo, phobosMat, deimosGeo, deimosMat);
   }
 
   private buildLights(): void {
@@ -926,7 +1193,14 @@ export class MarsScene {
   }
 
   resetCamera(): void {
-    const d = { third: [0, 0.3, 7.5], first: [0, -0.04, 0], overview: [0.7, 0.85, this.overviewDist], closeup: [2.55, 0.1, 3.4] }[this.mode];
+    const d = {
+      third: [0, 0.3, 7.5],
+      first: [0, -0.04, 0],
+      overview: [0.7, 0.85, this.overviewDist],
+      closeup: [2.55, 0.1, 3.4],
+      rover: [0.6, 0.35, 5.5],
+      ingenuity: [0.2, 0.45, 3.8],
+    }[this.mode];
     if (this.mode === "first") { this.camera.fov = 55; this.camera.updateProjectionMatrix(); }
     Object.assign(this.cams[this.mode], { yaw: d[0], pitch: d[1], dist: d[2] });
   }
@@ -1013,6 +1287,9 @@ export class MarsScene {
     this.updateAstronaut(dt, now);
     this.updateCamera(dt);
     this.updateDustParticles(dt);
+    if (this.rover) this.rover.animate(this.clock);
+    if (this.helicopter) this.helicopter.animate(dt, this.clock);
+    if (this.dustDevil) this.dustDevil.animate(dt);
     if (this.ring) {
       const pulse = 1 + 0.05 * Math.sin(this.clock * 2.4);
       this.ring.scale.set(pulse, pulse, 1);
@@ -1074,7 +1351,15 @@ export class MarsScene {
       );
     };
     const facing = Math.PI - THREE.MathUtils.degToRad(this.camHeading);   // yaw of the astronaut's forward axis
-    if (this.mode === "overview") {
+    if (this.mode === "rover") {
+      const rp = this.rover.root.position;
+      const center = rp.clone().add(new THREE.Vector3(0, 1.2, 0));
+      orbit(center, cam.yaw);
+    } else if (this.mode === "ingenuity") {
+      const hp = this.helicopter.root.position;
+      const center = hp.clone().add(new THREE.Vector3(0, -0.4, 0));
+      orbit(center, cam.yaw);
+    } else if (this.mode === "overview") {
       orbit(this.overviewCenter, cam.yaw);
     } else if (this.mode === "first") {
       const yaw = Math.PI - THREE.MathUtils.degToRad(this.heading) + cam.yaw;

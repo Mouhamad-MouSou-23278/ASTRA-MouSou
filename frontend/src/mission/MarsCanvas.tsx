@@ -7,6 +7,8 @@ import { useStoreVersion, type SessionStore } from "./store";
 const CAMERAS: { id: CameraMode; label: string; title: string }[] = [
   { id: "third", label: "3rd person", title: "Follow behind the astronaut" },
   { id: "first", label: "1st person", title: "Helmet view" },
+  { id: "rover", label: "Perseverance", title: "NASA Mars 2020 Perseverance Rover" },
+  { id: "ingenuity", label: "Ingenuity", title: "NASA Ingenuity Mars Helicopter View" },
   { id: "overview", label: "Overview", title: "Whole route from above" },
   { id: "closeup", label: "Close-up", title: "Close view of the astronaut" },
 ];
@@ -155,6 +157,16 @@ export function MarsCanvas({ detail, store }: { detail: SessionDetail; store: Se
         <div className="small hint" style={{ marginTop: 4, color: "#f3e6dccc" }}>drag to look · scroll / pinch to zoom</div>
       </div>
       <div className="hud bl">
+        {mode === "rover" && (
+          <div className="small" style={{ color: "#ffd276", fontWeight: "bold", marginBottom: 4 }}>
+            🛰️ NASA Mars 2020: Perseverance Rover · Mastcam-Z & SuperCam Active · Sample Caching Tube #04
+          </div>
+        )}
+        {mode === "ingenuity" && (
+          <div className="small" style={{ color: "#9fe8ff", fontWeight: "bold", marginBottom: 4 }}>
+            🚁 NASA Ingenuity Mars Helicopter (Ginny) · Aerial Reconnaissance Vantage · Coaxial Rotors Spinning
+          </div>
+        )}
         {a && (
           <div className="small">
             {a.outside ? <>E {a.x.toFixed(1)} m · N {a.y.toFixed(1)} m · HDG {a.heading.toFixed(0)}° {compass}</> : "Inside lander"}
