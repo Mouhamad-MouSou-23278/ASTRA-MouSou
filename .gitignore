@@ -1,0 +1,27 @@
+# Python
+backend/.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Runtime state: local SQLite database and the generated JWT secret
+backend/data/
+
+# Node / build output
+node_modules/
+frontend/dist/
+frontend/e2e-screenshots/
+
+# Raw downloaded science data (re-fetched by tools/terrain/build_terrain.py).
+# The processed terrain in backend/assets/terrain/ IS committed so ASTRA runs offline.
+data/raw/
+
+# Secrets and local configuration
+.env
+backend/.env
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -1,0 +1,20 @@
+# ASTRA backend runtime dependencies
+fastapi>=0.115,<1.0
+uvicorn[standard]>=0.30
+sqlalchemy>=2.0.30,<3.0
+pydantic>=2.7,<3.0
+pydantic-settings>=2.3
+PyJWT>=2.8
+python-multipart>=0.0.9
+httpx>=0.27
+qrcode>=7.4
+
+# PostgreSQL driver (used when DATABASE_URL points at PostgreSQL, e.g. in Docker)
+psycopg[binary]>=3.1
+
+# Optional LLM provider SDK. ASTRA runs fully offline without it; it is only
+# imported when LLM_PROVIDER=anthropic.
+anthropic>=2.0
+
+# Tests
+pytest>=8.0

@@ -1,0 +1,51 @@
+# ASTRA with PostgreSQL.
+#
+#   1. copy .env.example to .env and set POSTGRES_PASSWORD and ASTRA_SECRET_KEY
+#   2. docker compose up --build
+#   3. open http://localhost:8000
+#
+# For QR viewer links to work from phones, set ASTRA_PUBLIC_BASE_URL in .env to
+# the address of this machine on your network, e.g. http://192.168.1.20:8000
+# (inside a container the server cannot discover the host's LAN address).
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: astra
+      POSTGRES_USER: astra
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - astra-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U astra -d astra"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASTRA_DATABASE_URL: postgresql+psycopg://astra:${POSTGRES_PASSWORD}@db:5432/astra
+      ASTRA_SECRET_KEY: ${ASTRA_SECRET_KEY:?set ASTRA_SECRET_KEY in .env}
+      ASTRA_PUBLIC_BASE_URL: ${ASTRA_PUBLIC_BASE_URL:-}
+      ASTRA_SEED_DEMO_DATA: ${ASTRA_SEED_DEMO_DATA:-true}
+      ASTRA_DEMO_PASSWORD: ${ASTRA_DEMO_PASSWORD:-}
+      ASTRA_LLM_PROVIDER: ${ASTRA_LLM_PROVIDER:-local}
+      ASTRA_LLM_MODEL: ${ASTRA_LLM_MODEL:-}
+      ASTRA_LLM_BASE_URL: ${ASTRA_LLM_BASE_URL:-}
+      ASTRA_LLM_API_KEY: ${ASTRA_LLM_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ASTRA_SPEECH_PROVIDER: ${ASTRA_SPEECH_PROVIDER:-browser}
+      ASTRA_SPEECH_BASE_URL: ${ASTRA_SPEECH_BASE_URL:-}
+      ASTRA_SPEECH_API_KEY: ${ASTRA_SPEECH_API_KEY:-}
+    ports:
+      - "8000:8000"
+
+volumes:
+  astra-db:

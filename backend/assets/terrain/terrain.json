@@ -1,0 +1,28 @@
+{
+  "label": "Real Mars topography (HiRISE DTM) - processed for ASTRA",
+  "site": {
+    "name": "Octavia E. Butler Landing, Jezero Crater",
+    "lat_deg": 18.4447,
+    "lon_deg_east": 77.4508,
+    "elevation_m_mola": -2568.687
+  },
+  "coordinates": "x = east (m), y = north (m), origin at site; heights relative to site elevation",
+  "grid_order": "row 0 = north edge, column 0 = west edge, little-endian uint16",
+  "near": {
+    "file": "near_height.bin",
+    "n": 513,
+    "size_m": 512.0,
+    "min_m": -4.7085,
+    "max_m": 4.4268,
+    "texture": "near_ortho.jpg",
+    "border_blend_m": 32.0
+  },
+  "far": {
+    "file": "far_height.bin",
+    "n": 193,
+    "size_m": 3072.0,
+    "min_m": -57.3558,
+    "max_m": 102.4896,
+    "texture": "far_ortho.jpg"
+  }
+}

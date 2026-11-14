@@ -1,0 +1,80 @@
+{
+  "generated_utc": "2026-11-14T11:44:46Z",
+  "generator": "tools/terrain/build_terrain.py",
+  "site": {
+    "name": "Octavia E. Butler Landing, Jezero Crater",
+    "lat_deg": 18.4447,
+    "lon_deg_east": 77.4508,
+    "elevation_m_mola": -2568.687
+  },
+  "real_data": [
+    {
+      "asset": [
+        "near_height.bin",
+        "far_height.bin"
+      ],
+      "product_id": "DTEEC_045994_1985_046060_1985_U01",
+      "kind": "HiRISE stereo digital terrain model, 1 m/post, MOLA-referenced elevations",
+      "source_images": [
+        "ESP_045994_1985",
+        "ESP_046060_1985"
+      ],
+      "url": "https://hirise.lpl.arizona.edu/PDS/DTM/ESP/ORB_045900_045999/ESP_045994_1985_ESP_046060_1985/DTEEC_045994_1985_046060_1985_U01.IMG",
+      "catalog_page": "https://www.uahirise.org/dtm/ESP_045994_1985",
+      "credit": "NASA/JPL-Caltech/University of Arizona; DTM produced by USGS Astrogeology / University of Arizona",
+      "raster_window": {
+        "rows": [
+          4540,
+          7632
+        ],
+        "cols": [
+          2277,
+          5368
+        ]
+      },
+      "missing_cells_filled": 0,
+      "map_scale_m_per_px": 1.0096633268711
+    },
+    {
+      "asset": [
+        "near_ortho.jpg",
+        "far_ortho.jpg"
+      ],
+      "product_id": "ESP_045994_1985_RED_C_01_ORTHO",
+      "kind": "HiRISE orthorectified RED-filter image, 1 m/px (panchromatic)",
+      "url": "https://hirise.lpl.arizona.edu/PDS/DTM/ESP/ORB_045900_045999/ESP_045994_1985_ESP_046060_1985/ESP_045994_1985_RED_C_01_ORTHO.JP2",
+      "credit": "NASA/JPL-Caltech/University of Arizona",
+      "contrast_stretch_dn": {
+        "near": [
+          59.0,
+          160.0
+        ],
+        "far": [
+          43.0,
+          168.0
+        ]
+      }
+    }
+  ],
+  "processing": [
+    "DTM rows fetched by HTTP range request from the uncompressed PDS3 raster (PC_REAL 32-bit).",
+    "Near grid: bilinear resampling to an exact 1.0 m grid (513x513, 512 m).",
+    "Far grid: 8x8 box average then bilinear resampling to 16 m posts (193x193, 3072 m).",
+    "Outer 32 m of the near grid blended onto the far surface for crack-free stitching.",
+    "Heights stored relative to the site elevation and quantised to uint16 per grid.",
+    "Orthoimage cropped to both windows, 0.5-99.5 percentile contrast stretch, Lanczos resize."
+  ],
+  "procedural_not_real": [
+    "Surface colour: the RED orthoimage is panchromatic; the butterscotch/ochre tint is applied in the shader.",
+    "Sub-metre surface detail (noise bump/grain) added in the shader below DTM resolution.",
+    "Scattered rocks, lander, astronaut, waypoint markers, sky, dust haze and lighting are synthetic.",
+    "The lander is a generic vehicle placed at the Perseverance touchdown coordinates; it is not a model of any real spacecraft."
+  ],
+  "checksums_sha256": {
+    "near_height.bin": "d87a980dc723cf0a1d68c025955e9cf26f417508880c579ae123cf6f69643a1a",
+    "far_height.bin": "2d9fdcc2cb3a09a2744e9b603e1f6c9c4c5010d5698f8b8c86b1a2915e21b561",
+    "near_ortho.jpg": "e16868b0f9371a2effa81037b428e8b8122c9b0224f1ec19cd3c44f898ed3a94",
+    "far_ortho.jpg": "3e67f10f1208e449429cb773f7812417951b28bb54bbec3d350e4b22c4350326",
+    "terrain.json": "e8e4b348a06230e3645ca717395b318ea322aa569f220640cc53e53f5ad1e686"
+  }
+}
