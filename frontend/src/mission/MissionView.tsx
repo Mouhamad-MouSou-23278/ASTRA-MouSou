@@ -7,7 +7,10 @@ import { MarsCanvas } from "./MarsCanvas";
 import { TelemetryPanel, TimelinePanel, WarningsPanel } from "./panels";
 import { useSessionStream, useStoreVersion, type SessionStore } from "./store";
 
-type MobileTab = "telemetry" | "warnings" | "astra" | "timeline";
+import { DoctorExaminerConsole } from "../components/DoctorExaminerConsole";
+import { QrModal } from "../pages/OperatorPage";
+
+type MobileTab = "doctor" | "telemetry" | "warnings" | "astra" | "timeline";
 
 export function SessionStatusBar({ detail, store }: { detail: SessionDetail; store: SessionStore }) {
   useStoreVersion(store, 300);
@@ -46,6 +49,7 @@ export function MissionView({ sessionId, access, header }: {
   const { detail, error, store } = useSessionStream(sessionId, access);
   const [tab, setTab] = useState<MobileTab>("warnings");
   const [info, setInfo] = useState<SystemInfo | null>(null);
+  const [showQr, setShowQr] = useState(false);
   useStoreVersion(store, 500);
 
   useEffect(() => { api<SystemInfo>("/system/info").then(setInfo).catch(() => undefined); }, []);
@@ -56,8 +60,16 @@ export function MissionView({ sessionId, access, header }: {
   return (
     <>
       {header ? header({ detail, store }) : (
-        <div className="page-head"><SessionStatusBar detail={detail} store={store} /></div>
+        <div className="page-head">
+          <SessionStatusBar detail={detail} store={store} />
+          <div className="row" style={{ marginLeft: 16 }}>
+            <button className="btn sm primary" onClick={() => setShowQr(true)}>
+              🩺 Dr / Examiner QR
+            </button>
+          </div>
+        </div>
       )}
+      {showQr && <QrModal sessionId={sessionId} onClose={() => setShowQr(false)} />}
       {store.notice && <div className="notice-bar" role="alert">{store.notice}</div>}
       {info && info.ai.configured !== "local" && !info.ai.llm_available && (
         <Banner kind="warn">ASTRA AI is running on the local deterministic explainer: {info.ai.detail}</Banner>
@@ -65,18 +77,29 @@ export function MissionView({ sessionId, access, header }: {
       <div className="mission" data-tab={tab}>
         <MarsCanvas detail={detail} store={store} />
         <div className="mobile-tabs" role="tablist">
+          <button role="tab" aria-selected={tab === "doctor"} className={`tab ${tab === "doctor" ? "active" : ""}`} onClick={() => setTab("doctor")} style={{ color: "#34d399", fontWeight: "bold" }}>
+            🩺 Doctor Mode
+          </button>
           {(["warnings", "astra", "telemetry", "timeline"] as MobileTab[]).map((t) => (
             <button key={t} role="tab" aria-selected={tab === t} className={`tab ${tab === t ? "active" : ""}`} onClick={() => setTab(t)}>
               {t === "astra" ? "ASTRA AI" : t[0].toUpperCase() + t.slice(1)}
             </button>
           ))}
         </div>
-        <div className="side">
-          <WarningsPanel store={store} />
-          <ChatPanel sessionId={sessionId} access={access} speech={info?.speech ?? null} />
-        </div>
-        <TelemetryPanel detail={detail} store={store} />
-        <TimelinePanel detail={detail} store={store} />
+        {tab === "doctor" ? (
+          <div className="side" style={{ gridColumn: "span 2" }}>
+            <DoctorExaminerConsole detail={detail} store={store} />
+          </div>
+        ) : (
+          <>
+            <div className="side">
+              <WarningsPanel store={store} />
+              <ChatPanel sessionId={sessionId} access={access} speech={info?.speech ?? null} />
+            </div>
+            <TelemetryPanel detail={detail} store={store} />
+            <TimelinePanel detail={detail} store={store} />
+          </>
+        )}
       </div>
     </>
   );

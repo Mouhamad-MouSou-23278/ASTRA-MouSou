@@ -316,3 +316,39 @@ def delete_dataset(dataset_id: int, db: Session = Depends(get_db), user: User = 
     db.delete(dataset)
     audit(db, user, "dataset.delete", "dataset", dataset_id, {"name": dataset.name})
     db.commit()
+
+
+# ------------------------------------------------------------------ ML Decision Engine
+@router.get("/ml-model")
+def get_ml_model_status(_: User = Depends(reader)):
+    """Return status and performance metrics of the ASTRA Medical ML engine."""
+    from ..services.ml_medical import get_medical_ml_engine
+    ml = get_medical_ml_engine()
+    return {
+        "trained": ml.is_trained,
+        "accuracy": ml.accuracy,
+        "n_trees": len(ml.trees),
+        "feature_importances": ml.feature_importances,
+        "feature_names": ml.feature_names,
+    }
+
+
+@router.post("/ml-retrain")
+def retrain_ml_model(_: User = Depends(writer)):
+    """Retrain the Medical ML Random Forest on the latest telemetry dataset."""
+    from ..services.ml_medical import get_medical_ml_engine
+    ml = get_medical_ml_engine()
+    res = ml.train_from_csv()
+    return res
+
+
+@router.post("/ml-triage")
+def perform_ml_triage(payload: dict[str, Any], _: User = Depends(reader)):
+    """Evaluate real-time vital signs and TDL trust scores through the ML Decision Engine."""
+    from ..services.ml_medical import get_medical_ml_engine
+    ml = get_medical_ml_engine()
+    features = payload.get("features", payload)
+    comm_loss = bool(payload.get("comm_loss", False))
+    lang = str(payload.get("lang", "en"))
+    return ml.predict_triage(features, comm_loss=comm_loss, lang=lang)
+

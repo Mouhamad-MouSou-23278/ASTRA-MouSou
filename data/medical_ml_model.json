@@ -1,0 +1,916 @@
+{
+  "accuracy": 0.9708,
+  "feature_names": [
+    "heart_rate",
+    "spo2_pct",
+    "core_temp_c",
+    "resp_rate_bpm",
+    "suit_pressure_kpa",
+    "co2_mmhg",
+    "rad_dose_rate_usv",
+    "spo2_trust",
+    "hr_trust",
+    "temp_trust",
+    "press_trust"
+  ],
+  "feature_importances": {
+    "heart_rate": 0.076,
+    "spo2_pct": 0.139,
+    "core_temp_c": 0.114,
+    "resp_rate_bpm": 0.114,
+    "suit_pressure_kpa": 0.139,
+    "co2_mmhg": 0.165,
+    "rad_dose_rate_usv": 0.101,
+    "spo2_trust": 0.025,
+    "hr_trust": 0.038,
+    "temp_trust": 0.038,
+    "press_trust": 0.051
+  },
+  "trees": [
+    {
+      "feature": "rad_dose_rate_usv",
+      "threshold": 777.1500000000001,
+      "left": {
+        "feature": "resp_rate_bpm",
+        "threshold": 22.75,
+        "left": {
+          "feature": "press_trust",
+          "threshold": 0.5,
+          "left": {
+            "prediction": "SENSOR_ARTIFACT_FALSE_ALARM",
+            "probabilities": {
+              "SENSOR_ARTIFACT_FALSE_ALARM": 1.0
+            }
+          },
+          "right": {
+            "feature": "temp_trust",
+            "threshold": 0.9415,
+            "left": {
+              "feature": "core_temp_c",
+              "threshold": 39.09,
+              "left": {
+                "prediction": "NOMINAL",
+                "probabilities": {
+                  "RADIATION_EVENT": 0.4,
+                  "NOMINAL": 0.6
+                }
+              },
+              "right": {
+                "prediction": "SENSOR_ARTIFACT_FALSE_ALARM",
+                "probabilities": {
+                  "SENSOR_ARTIFACT_FALSE_ALARM": 1.0
+                }
+              }
+            },
+            "right": {
+              "feature": "hr_trust",
+              "threshold": 0.3435,
+              "left": {
+                "prediction": "SENSOR_ARTIFACT_FALSE_ALARM",
+                "probabilities": {
+                  "SENSOR_ARTIFACT_FALSE_ALARM": 1.0
+                }
+              },
+              "right": {
+                "prediction": "NOMINAL",
+                "probabilities": {
+                  "NOMINAL": 0.622,
+                  "DECOMPRESSION_RISK": 0.064,
+                  "SENSOR_ARTIFACT_FALSE_ALARM": 0.202,
+                  "HEAT_EXHAUSTION": 0.048,
+                  "RADIATION_EVENT": 0.064
+                }
+              }
+            }
+          }
+        },
+        "right": {
+          "feature": "core_temp_c",
+          "threshold": 37.93,
+          "left": {
+            "feature": "co2_mmhg",
+            "threshold": 3.1399999999999997,
+            "left": {
+              "feature": "resp_rate_bpm",
+              "threshold": 30.45,
+              "left": {
+                "prediction": "DECOMPRESSION_RISK",
+                "probabilities": {
+                  "HYPOXIA": 0.408,
+                  "DECOMPRESSION_RISK": 0.592
+                }
+              },
+              "right": {
+                "prediction": "HYPOXIA",
+                "probabilities": {
+                  "HYPOXIA": 1.0
+                }
+              }
+            },
+            "right": {
+              "feature": "resp_rate_bpm",
+              "threshold": 24.450000000000003,
+              "left": {
+                "prediction": "DECOMPRESSION_RISK",
+                "probabilities": {
+                  "DECOMPRESSION_RISK": 1.0
+                }
+              },
+              "right": {
+                "prediction": "HYPERCAPNIA",
+                "probabilities": {
+                  "HYPERCAPNIA": 1.0
+                }
+              }
+            }
+          },
+          "right": {
+            "prediction": "HEAT_EXHAUSTION",
+            "probabilities": {
+              "HEAT_EXHAUSTION": 1.0
+            }
+          }
+        }
+      },
+      "right": {
+        "prediction": "RADIATION_EVENT",
+        "probabilities": {
+          "RADIATION_EVENT": 1.0
+        }
+      }
+    },
+    {
+      "feature": "co2_mmhg",
+      "threshold": 2.99,
+      "left": {
+        "feature": "rad_dose_rate_usv",
+        "threshold": 777.1500000000001,
+        "left": {
+          "feature": "heart_rate",
+          "threshold": 114.35,
+          "left": {
+            "feature": "temp_trust",
+            "threshold": 0.29,
+            "left": {
+              "prediction": "SENSOR_ARTIFACT_FALSE_ALARM",
+              "probabilities": {
+                "SENSOR_ARTIFACT_FALSE_ALARM": 1.0
+              }
+            },
+            "right": {
+              "feature": "spo2_pct",
+              "threshold": 96.8,
+              "left": {
+                "prediction": "SENSOR_ARTIFACT_FALSE_ALARM",
+                "probabilities": {
+                  "SENSOR_ARTIFACT_FALSE_ALARM": 1.0
+                }
+              },
+              "right": {
+                "prediction": "NOMINAL",
+                "probabilities": {
+                  "NOMINAL": 0.676,
+                  "SENSOR_ARTIFACT_FALSE_ALARM": 0.193,
+                  "DECOMPRESSION_RISK": 0.062,
+                  "RADIATION_EVENT": 0.068
+                }
+              }
+            }
+          },
+          "right": {
+            "feature": "core_temp_c",
+            "threshold": 38.41,
+            "left": {
+              "feature": "spo2_pct",
+              "threshold": 97.15,
+              "left": {
+                "prediction": "HYPOXIA",
+                "probabilities": {
+                  "DECOMPRESSION_RISK": 0.029,
+                  "HYPOXIA": 0.949,
+                  "SENSOR_ARTIFACT_FALSE_ALARM": 0.015,
+                  "HEAT_EXHAUSTION": 0.007
+                }
+              },
+              "right": {
+                "prediction": "DECOMPRESSION_RISK",
+                "probabilities": {
+                  "SENSOR_ARTIFACT_FALSE_ALARM": 0.213,
+                  "DECOMPRESSION_RISK": 0.772,
+                  "HEAT_EXHAUSTION": 0.015
+                }
+              }
+            },
+            "right": {
+              "prediction": "HEAT_EXHAUSTION",
+              "probabilities": {
+                "HEAT_EXHAUSTION": 1.0
+              }
+            }
+          }
+        },
+        "right": {
+          "prediction": "RADIATION_EVENT",
+          "probabilities": {
+            "RADIATION_EVENT": 1.0
+          }
+        }
+      },
+      "right": {
+        "feature": "heart_rate",
+        "threshold": 107.35,
+        "left": {
+          "feature": "co2_mmhg",
+          "threshold": 7.819999999999999,
+          "left": {
+            "feature": "suit_pressure_kpa",
+            "threshold": 29.5,
+            "left": {
+              "prediction": "NOMINAL",
+              "probabilities": {
+                "NOMINAL": 1.0
+              }
+            },
+            "right": {
+              "prediction": "RADIATION_EVENT",
+              "probabilities": {
+                "RADIATION_EVENT": 1.0
+              }
+            }
+          },
+          "right": {
+            "prediction": "HYPERCAPNIA",
+            "probabilities": {
+              "HYPERCAPNIA": 1.0
+            }
+          }
+        },
+        "right": {
+          "feature": "hr_trust",
+          "threshold": 0.9225000000000001,
+          "left": {
+            "feature": "co2_mmhg",
+            "threshold": 5.585,
+            "left": {
+              "prediction": "DECOMPRESSION_RISK",
+              "probabilities": {
+                "DECOMPRESSION_RISK": 1.0
+              }
+            },
+            "right": {
+              "prediction": "HYPERCAPNIA",
+              "probabilities": {
+                "HYPERCAPNIA": 1.0
+              }
+            }
+          },
+          "right": {
+            "prediction": "HYPERCAPNIA",
+            "probabilities": {
+              "HYPERCAPNIA": 1.0
+            }
+          }
+        }
+      }
+    },
+    {
+      "feature": "co2_mmhg",
+      "threshold": 7.965,
+      "left": {
+        "feature": "resp_rate_bpm",
+        "threshold": 16.95,
+        "left": {
+          "feature": "rad_dose_rate_usv",
+          "threshold": 33.3,
+          "left": {
+            "feature": "spo2_trust",
+            "threshold": 0.3135,
+            "left": {
+              "prediction": "SENSOR_ARTIFACT_FALSE_ALARM",
+              "probabilities": {
+                "SENSOR_ARTIFACT_FALSE_ALARM": 1.0
+              }
+            },
+            "right": {
+              "feature": "temp_trust",
+              "threshold": 0.2665,
+              "left": {
+                "prediction": "SENSOR_ARTIFACT_FALSE_ALARM",
+                "probabilities": {
+                  "SENSOR_ARTIFACT_FALSE_ALARM": 1.0
+                }
+              },
+              "right": {
+                "prediction": "NOMINAL",
+                "probabilities": {
+                  "SENSOR_ARTIFACT_FALSE_ALARM": 0.426,
+                  "NOMINAL": 0.574
+                }
+              }
+            }
+          },
+          "right": {
+            "feature": "press_trust",
+            "threshold": 0.5,
+            "left": {
+              "prediction": "SENSOR_ARTIFACT_FALSE_ALARM",
+              "probabilities": {
+                "SENSOR_ARTIFACT_FALSE_ALARM": 1.0
+              }
+            },
+            "right": {
+              "feature": "rad_dose_rate_usv",
+              "threshold": 293.5,
+              "left": {
+                "prediction": "NOMINAL",
+                "probabilities": {
+                  "NOMINAL": 1.0
+                }
+              },
+              "right": {
+                "prediction": "RADIATION_EVENT",
+                "probabilities": {
+                  "RADIATION_EVENT": 1.0
+                }
+              }
+            }
+          }
+        },
+        "right": {
+          "feature": "suit_pressure_kpa",
+          "threshold": 26.375,
+          "left": {
+            "feature": "press_trust",
+            "threshold": 0.5,
+            "left": {
+              "prediction": "SENSOR_ARTIFACT_FALSE_ALARM",
+              "probabilities": {
+                "SENSOR_ARTIFACT_FALSE_ALARM": 1.0
+              }
+            },
+            "right": {
+              "prediction": "DECOMPRESSION_RISK",
+              "probabilities": {
+                "DECOMPRESSION_RISK": 1.0
+              }
+            }
+          },
+          "right": {
+            "feature": "spo2_pct",
+            "threshold": 88.45,
+            "left": {
+              "feature": "spo2_pct",
+              "threshold": 72.75,
+              "left": {
+                "prediction": "SENSOR_ARTIFACT_FALSE_ALARM",
+                "probabilities": {
+                  "SENSOR_ARTIFACT_FALSE_ALARM": 1.0
+                }
+              },
+              "right": {
+                "prediction": "HYPOXIA",
+                "probabilities": {
+                  "HYPOXIA": 1.0
+                }
+              }
+            },
+            "right": {
+              "feature": "heart_rate",
+              "threshold": 115.7,
+              "left": {
+                "prediction": "RADIATION_EVENT",
+                "probabilities": {
+                  "NOMINAL": 0.333,
+                  "RADIATION_EVENT": 0.417,
+                  "SENSOR_ARTIFACT_FALSE_ALARM": 0.208,
+                  "HYPOXIA": 0.042
+                }
+              },
+              "right": {
+                "prediction": "HEAT_EXHAUSTION",
+                "probabilities": {
+                  "HEAT_EXHAUSTION": 0.806,
+                  "DECOMPRESSION_RISK": 0.062,
+                  "HYPOXIA": 0.09,
+                  "SENSOR_ARTIFACT_FALSE_ALARM": 0.035,
+                  "HYPERCAPNIA": 0.007
+                }
+              }
+            }
+          }
+        }
+      },
+      "right": {
+        "prediction": "HYPERCAPNIA",
+        "probabilities": {
+          "HYPERCAPNIA": 1.0
+        }
+      }
+    },
+    {
+      "feature": "co2_mmhg",
+      "threshold": 3.0,
+      "left": {
+        "feature": "rad_dose_rate_usv",
+        "threshold": 612.4,
+        "left": {
+          "feature": "heart_rate",
+          "threshold": 115.45,
+          "left": {
+            "feature": "core_temp_c",
+            "threshold": 37.31,
+            "left": {
+              "feature": "suit_pressure_kpa",
+              "threshold": 9.85,
+              "left": {
+                "prediction": "SENSOR_ARTIFACT_FALSE_ALARM",
+                "probabilities": {
+                  "SENSOR_ARTIFACT_FALSE_ALARM": 1.0
+                }
+              },
+              "right": {
+                "prediction": "NOMINAL",
+                "probabilities": {
+                  "SENSOR_ARTIFACT_FALSE_ALARM": 0.15,
+                  "NOMINAL": 0.715,
+                  "DECOMPRESSION_RISK": 0.062,
+                  "RADIATION_EVENT": 0.041,
+                  "HYPOXIA": 0.031
+                }
+              }
+            },
+            "right": {
+              "feature": "core_temp_c",
+              "threshold": 37.345,
+              "left": {
+                "prediction": "NOMINAL",
+                "probabilities": {
+                  "NOMINAL": 1.0
+                }
+              },
+              "right": {
+                "prediction": "SENSOR_ARTIFACT_FALSE_ALARM",
+                "probabilities": {
+                  "SENSOR_ARTIFACT_FALSE_ALARM": 1.0
+                }
+              }
+            }
+          },
+          "right": {
+            "feature": "spo2_pct",
+            "threshold": 92.5,
+            "left": {
+              "prediction": "HYPOXIA",
+              "probabilities": {
+                "HYPOXIA": 1.0
+              }
+            },
+            "right": {
+              "feature": "suit_pressure_kpa",
+              "threshold": 29.045,
+              "left": {
+                "prediction": "DECOMPRESSION_RISK",
+                "probabilities": {
+                  "DECOMPRESSION_RISK": 0.975,
+                  "HEAT_EXHAUSTION": 0.025
+                }
+              },
+              "right": {
+                "prediction": "HEAT_EXHAUSTION",
+                "probabilities": {
+                  "SENSOR_ARTIFACT_FALSE_ALARM": 0.25,
+                  "HEAT_EXHAUSTION": 0.75
+                }
+              }
+            }
+          }
+        },
+        "right": {
+          "prediction": "RADIATION_EVENT",
+          "probabilities": {
+            "RADIATION_EVENT": 1.0
+          }
+        }
+      },
+      "right": {
+        "feature": "co2_mmhg",
+        "threshold": 8.39,
+        "left": {
+          "feature": "heart_rate",
+          "threshold": 92.65,
+          "left": {
+            "prediction": "NOMINAL",
+            "probabilities": {
+              "NOMINAL": 1.0
+            }
+          },
+          "right": {
+            "feature": "suit_pressure_kpa",
+            "threshold": 27.13,
+            "left": {
+              "prediction": "DECOMPRESSION_RISK",
+              "probabilities": {
+                "DECOMPRESSION_RISK": 1.0
+              }
+            },
+            "right": {
+              "prediction": "HYPERCAPNIA",
+              "probabilities": {
+                "HYPERCAPNIA": 1.0
+              }
+            }
+          }
+        },
+        "right": {
+          "prediction": "HYPERCAPNIA",
+          "probabilities": {
+            "HYPERCAPNIA": 1.0
+          }
+        }
+      }
+    },
+    {
+      "feature": "co2_mmhg",
+      "threshold": 3.05,
+      "left": {
+        "feature": "rad_dose_rate_usv",
+        "threshold": 777.1500000000001,
+        "left": {
+          "feature": "spo2_pct",
+          "threshold": 96.65,
+          "left": {
+            "feature": "core_temp_c",
+            "threshold": 37.285,
+            "left": {
+              "feature": "spo2_trust",
+              "threshold": 0.3,
+              "left": {
+                "prediction": "SENSOR_ARTIFACT_FALSE_ALARM",
+                "probabilities": {
+                  "SENSOR_ARTIFACT_FALSE_ALARM": 1.0
+                }
+              },
+              "right": {
+                "prediction": "HYPOXIA",
+                "probabilities": {
+                  "HYPOXIA": 0.963,
+                  "DECOMPRESSION_RISK": 0.007,
+                  "SENSOR_ARTIFACT_FALSE_ALARM": 0.03
+                }
+              }
+            },
+            "right": {
+              "feature": "spo2_pct",
+              "threshold": 91.05,
+              "left": {
+                "prediction": "HYPOXIA",
+                "probabilities": {
+                  "HYPOXIA": 1.0
+                }
+              },
+              "right": {
+                "prediction": "HEAT_EXHAUSTION",
+                "probabilities": {
+                  "HEAT_EXHAUSTION": 1.0
+                }
+              }
+            }
+          },
+          "right": {
+            "feature": "resp_rate_bpm",
+            "threshold": 22.55,
+            "left": {
+              "feature": "suit_pressure_kpa",
+              "threshold": 9.37,
+              "left": {
+                "prediction": "SENSOR_ARTIFACT_FALSE_ALARM",
+                "probabilities": {
+                  "SENSOR_ARTIFACT_FALSE_ALARM": 1.0
+                }
+              },
+              "right": {
+                "prediction": "NOMINAL",
+                "probabilities": {
+                  "SENSOR_ARTIFACT_FALSE_ALARM": 0.263,
+                  "NOMINAL": 0.622,
+                  "RADIATION_EVENT": 0.051,
+                  "DECOMPRESSION_RISK": 0.051,
+                  "HEAT_EXHAUSTION": 0.014
+                }
+              }
+            },
+            "right": {
+              "feature": "core_temp_c",
+              "threshold": 38.36,
+              "left": {
+                "prediction": "DECOMPRESSION_RISK",
+                "probabilities": {
+                  "DECOMPRESSION_RISK": 0.993,
+                  "HEAT_EXHAUSTION": 0.007
+                }
+              },
+              "right": {
+                "prediction": "HEAT_EXHAUSTION",
+                "probabilities": {
+                  "HEAT_EXHAUSTION": 1.0
+                }
+              }
+            }
+          }
+        },
+        "right": {
+          "prediction": "RADIATION_EVENT",
+          "probabilities": {
+            "RADIATION_EVENT": 1.0
+          }
+        }
+      },
+      "right": {
+        "feature": "suit_pressure_kpa",
+        "threshold": 26.86,
+        "left": {
+          "prediction": "DECOMPRESSION_RISK",
+          "probabilities": {
+            "DECOMPRESSION_RISK": 1.0
+          }
+        },
+        "right": {
+          "feature": "co2_mmhg",
+          "threshold": 3.0999999999999996,
+          "left": {
+            "prediction": "NOMINAL",
+            "probabilities": {
+              "NOMINAL": 1.0
+            }
+          },
+          "right": {
+            "feature": "resp_rate_bpm",
+            "threshold": 13.45,
+            "left": {
+              "prediction": "NOMINAL",
+              "probabilities": {
+                "NOMINAL": 1.0
+              }
+            },
+            "right": {
+              "feature": "resp_rate_bpm",
+              "threshold": 14.45,
+              "left": {
+                "prediction": "NOMINAL",
+                "probabilities": {
+                  "NOMINAL": 1.0
+                }
+              },
+              "right": {
+                "prediction": "HYPERCAPNIA",
+                "probabilities": {
+                  "HYPERCAPNIA": 0.994,
+                  "NOMINAL": 0.006
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "feature": "co2_mmhg",
+      "threshold": 2.9450000000000003,
+      "left": {
+        "feature": "suit_pressure_kpa",
+        "threshold": 26.04,
+        "left": {
+          "feature": "resp_rate_bpm",
+          "threshold": 22.1,
+          "left": {
+            "feature": "suit_pressure_kpa",
+            "threshold": 12.875,
+            "left": {
+              "prediction": "SENSOR_ARTIFACT_FALSE_ALARM",
+              "probabilities": {
+                "SENSOR_ARTIFACT_FALSE_ALARM": 1.0
+              }
+            },
+            "right": {
+              "prediction": "DECOMPRESSION_RISK",
+              "probabilities": {
+                "DECOMPRESSION_RISK": 1.0
+              }
+            }
+          },
+          "right": {
+            "prediction": "DECOMPRESSION_RISK",
+            "probabilities": {
+              "DECOMPRESSION_RISK": 1.0
+            }
+          }
+        },
+        "right": {
+          "feature": "rad_dose_rate_usv",
+          "threshold": 784.4000000000001,
+          "left": {
+            "feature": "resp_rate_bpm",
+            "threshold": 17.450000000000003,
+            "left": {
+              "feature": "spo2_pct",
+              "threshold": 85.65,
+              "left": {
+                "prediction": "SENSOR_ARTIFACT_FALSE_ALARM",
+                "probabilities": {
+                  "SENSOR_ARTIFACT_FALSE_ALARM": 1.0
+                }
+              },
+              "right": {
+                "prediction": "NOMINAL",
+                "probabilities": {
+                  "NOMINAL": 0.644,
+                  "SENSOR_ARTIFACT_FALSE_ALARM": 0.293,
+                  "RADIATION_EVENT": 0.063
+                }
+              }
+            },
+            "right": {
+              "feature": "core_temp_c",
+              "threshold": 37.215,
+              "left": {
+                "prediction": "HYPOXIA",
+                "probabilities": {
+                  "HYPOXIA": 0.867,
+                  "DECOMPRESSION_RISK": 0.078,
+                  "SENSOR_ARTIFACT_FALSE_ALARM": 0.047,
+                  "NOMINAL": 0.008
+                }
+              },
+              "right": {
+                "prediction": "HEAT_EXHAUSTION",
+                "probabilities": {
+                  "HEAT_EXHAUSTION": 0.897,
+                  "HYPOXIA": 0.09,
+                  "SENSOR_ARTIFACT_FALSE_ALARM": 0.014
+                }
+              }
+            }
+          },
+          "right": {
+            "prediction": "RADIATION_EVENT",
+            "probabilities": {
+              "RADIATION_EVENT": 1.0
+            }
+          }
+        }
+      },
+      "right": {
+        "feature": "co2_mmhg",
+        "threshold": 8.455,
+        "left": {
+          "feature": "co2_mmhg",
+          "threshold": 5.715,
+          "left": {
+            "feature": "hr_trust",
+            "threshold": 0.9455,
+            "left": {
+              "feature": "spo2_pct",
+              "threshold": 98.8,
+              "left": {
+                "prediction": "RADIATION_EVENT",
+                "probabilities": {
+                  "RADIATION_EVENT": 0.5,
+                  "NOMINAL": 0.5
+                }
+              },
+              "right": {
+                "prediction": "NOMINAL",
+                "probabilities": {
+                  "NOMINAL": 1.0
+                }
+              }
+            },
+            "right": {
+              "feature": "press_trust",
+              "threshold": 0.9724999999999999,
+              "left": {
+                "prediction": "DECOMPRESSION_RISK",
+                "probabilities": {
+                  "DECOMPRESSION_RISK": 0.5,
+                  "HEAT_EXHAUSTION": 0.5
+                }
+              },
+              "right": {
+                "prediction": "SENSOR_ARTIFACT_FALSE_ALARM",
+                "probabilities": {
+                  "SENSOR_ARTIFACT_FALSE_ALARM": 1.0
+                }
+              }
+            }
+          },
+          "right": {
+            "prediction": "HYPERCAPNIA",
+            "probabilities": {
+              "HYPERCAPNIA": 1.0
+            }
+          }
+        },
+        "right": {
+          "prediction": "HYPERCAPNIA",
+          "probabilities": {
+            "HYPERCAPNIA": 1.0
+          }
+        }
+      }
+    },
+    {
+      "feature": "co2_mmhg",
+      "threshold": 7.965,
+      "left": {
+        "feature": "suit_pressure_kpa",
+        "threshold": 26.369999999999997,
+        "left": {
+          "feature": "suit_pressure_kpa",
+          "threshold": 9.035,
+          "left": {
+            "prediction": "SENSOR_ARTIFACT_FALSE_ALARM",
+            "probabilities": {
+              "SENSOR_ARTIFACT_FALSE_ALARM": 1.0
+            }
+          },
+          "right": {
+            "prediction": "DECOMPRESSION_RISK",
+            "probabilities": {
+              "DECOMPRESSION_RISK": 1.0
+            }
+          }
+        },
+        "right": {
+          "feature": "heart_rate",
+          "threshold": 99.55,
+          "left": {
+            "feature": "spo2_pct",
+            "threshold": 85.85,
+            "left": {
+              "prediction": "SENSOR_ARTIFACT_FALSE_ALARM",
+              "probabilities": {
+                "SENSOR_ARTIFACT_FALSE_ALARM": 1.0
+              }
+            },
+            "right": {
+              "feature": "rad_dose_rate_usv",
+              "threshold": 695.6500000000001,
+              "left": {
+                "prediction": "NOMINAL",
+                "probabilities": {
+                  "NOMINAL": 0.747,
+                  "SENSOR_ARTIFACT_FALSE_ALARM": 0.184,
+                  "RADIATION_EVENT": 0.07
+                }
+              },
+              "right": {
+                "prediction": "RADIATION_EVENT",
+                "probabilities": {
+                  "RADIATION_EVENT": 1.0
+                }
+              }
+            }
+          },
+          "right": {
+            "feature": "spo2_pct",
+            "threshold": 88.65,
+            "left": {
+              "prediction": "HYPOXIA",
+              "probabilities": {
+                "HYPOXIA": 1.0
+              }
+            },
+            "right": {
+              "feature": "core_temp_c",
+              "threshold": 37.209999999999994,
+              "left": {
+                "prediction": "SENSOR_ARTIFACT_FALSE_ALARM",
+                "probabilities": {
+                  "SENSOR_ARTIFACT_FALSE_ALARM": 0.659,
+                  "HYPOXIA": 0.205,
+                  "DECOMPRESSION_RISK": 0.068,
+                  "RADIATION_EVENT": 0.068
+                }
+              },
+              "right": {
+                "prediction": "HEAT_EXHAUSTION",
+                "probabilities": {
+                  "HEAT_EXHAUSTION": 0.971,
+                  "SENSOR_ARTIFACT_FALSE_ALARM": 0.014,
+                  "DECOMPRESSION_RISK": 0.007,
+                  "HYPERCAPNIA": 0.007
+                }
+              }
+            }
+          }
+        }
+      },
+      "right": {
+        "prediction": "HYPERCAPNIA",
+        "probabilities": {
+          "HYPERCAPNIA": 1.0
+        }
+      }
+    }
+  ]
+}

@@ -6,6 +6,8 @@ import { Banner, Chip, Confirm, ErrorBanner, Field, Modal, Tabs, fmtDate, useAct
 import { api } from "../lib/api";
 import { useAuth } from "../lib/auth";
 
+import { TdlPipelineVisualizer } from "../components/TdlPipelineVisualizer";
+
 interface Named { id: number; key: string; name: string }
 interface Source { id: number; key: string; title: string; organization: string; url: string; source_type: string }
 interface SensorLite { id: number; key: string; name: string; unit: string; status: string }
@@ -123,7 +125,7 @@ function DatasetsTab({ canWrite, sources }: { canWrite: boolean; sources: Source
 export function MedicalPage() {
   const { user } = useAuth();
   const canWrite = user?.role === "medical";
-  const [tab, setTab] = useState<"conditions" | "rules" | "recs" | "sources" | "datasets" | "symptoms" | "astronauts">("conditions");
+  const [tab, setTab] = useState<"ml_pipeline" | "conditions" | "rules" | "recs" | "sources" | "datasets" | "symptoms" | "astronauts">("ml_pipeline");
   const conditions = useLoad(() => api<Named[]>("/conditions"), [tab]);
   const symptoms = useLoad(() => api<Named[]>("/symptoms"), [tab]);
   const sources = useLoad(() => api<Source[]>("/sources"), [tab]);
@@ -139,11 +141,14 @@ export function MedicalPage() {
         <span className="muted">{canWrite ? "Manage conditions, warning rules, recommendations, sources and synthetic profiles." : "Read-only view. Only the Medical Team can edit medical data."}</span>
       </div>
       <Tabs value={tab} onChange={setTab} tabs={[
+        { id: "ml_pipeline", label: "⚡ TDL & ML Pipeline" },
         { id: "conditions", label: "Conditions" }, { id: "rules", label: "Warning rules" }, { id: "recs", label: "Recommendations" },
         { id: "sources", label: "Scientific sources" }, { id: "datasets", label: "Datasets" }, { id: "symptoms", label: "Symptoms" },
         { id: "astronauts", label: "Astronaut profiles" },
       ]} />
       <ErrorBanner error={sensors.error} />
+
+      {tab === "ml_pipeline" && <TdlPipelineVisualizer />}
 
       {tab === "conditions" && (
         <CrudPage<any> wide title="Medical conditions" noun="condition" endpoint="/conditions" canWrite={canWrite}

@@ -380,6 +380,13 @@ export class MarsScene {
   private frames = 0;
   private slowMs = 0;
 
+  // NASA Graphics Upgrades
+  private dustParticles?: THREE.Points;
+  private dustVelocities = new Float32Array(0);
+  private stormMode: "clear" | "hazy" | "storm" = "clear";
+  private instrumentsGroup = new THREE.Group();
+  private contourMesh?: THREE.LineSegments;
+
   constructor(private canvas: HTMLCanvasElement, private opts: SceneOptions) {
     this.quality = opts.quality;
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
@@ -431,6 +438,8 @@ export class MarsScene {
     this.buildRocks(rand);
     this.buildLander();
     this.buildMarkers();
+    this.buildAtmosphericDust();
+    this.buildScientificInstruments();
     this.astronaut = new Astronaut(this.envMap);
     this.scene.add(this.astronaut.root, this.locator);
     this.astronaut.root.visible = false;
@@ -619,6 +628,165 @@ export class MarsScene {
     }
     this.scene.add(g);
     this.disposables.push(foil, white, dark, panel, glow);
+  }
+
+  private buildAtmosphericDust(): void {
+    const count = this.quality === "high" ? 750 : 320;
+    const geo = new THREE.BufferGeometry();
+    const positions = new Float32Array(count * 3);
+    const colors = new Float32Array(count * 3);
+    this.dustVelocities = new Float32Array(count * 3);
+
+    for (let i = 0; i < count; i++) {
+      positions[i * 3] = (Math.random() - 0.5) * 360;
+      positions[i * 3 + 1] = Math.random() * 32 + 0.3;
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 360;
+
+      const c = 0.72 + Math.random() * 0.28;
+      colors[i * 3] = c;
+      colors[i * 3 + 1] = c * 0.65;
+      colors[i * 3 + 2] = c * 0.45;
+
+      this.dustVelocities[i * 3] = 1.4 + Math.random() * 2.8;
+      this.dustVelocities[i * 3 + 1] = (Math.random() - 0.5) * 0.5;
+      this.dustVelocities[i * 3 + 2] = -0.6 + (Math.random() - 0.5) * 1.5;
+    }
+
+    geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+
+    const mat = new THREE.PointsMaterial({
+      size: 0.28,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.65,
+      fog: true,
+      sizeAttenuation: true,
+    });
+
+    this.dustParticles = new THREE.Points(geo, mat);
+    this.scene.add(this.dustParticles);
+    this.disposables.push(geo, mat);
+  }
+
+  private updateDustParticles(dt: number): void {
+    if (!this.dustParticles) return;
+    const pos = this.dustParticles.geometry.attributes.position as THREE.BufferAttribute;
+    const mult = this.stormMode === "storm" ? 4.8 : this.stormMode === "hazy" ? 2.2 : 0.9;
+    for (let i = 0; i < pos.count; i++) {
+      let px = pos.getX(i) + this.dustVelocities[i * 3] * dt * mult;
+      let py = pos.getY(i) + this.dustVelocities[i * 3 + 1] * dt * mult;
+      let pz = pos.getZ(i) + this.dustVelocities[i * 3 + 2] * dt * mult;
+
+      if (px > 180) px = -180;
+      if (py < 0.2) py = 32;
+      if (py > 35) py = 0.5;
+      if (pz > 180) pz = -180;
+      if (pz < -180) pz = 180;
+
+      pos.setXYZ(i, px, py, pz);
+    }
+    pos.needsUpdate = true;
+  }
+
+  private buildScientificInstruments(): void {
+    const l = this.opts.world.lander;
+    const g = this.instrumentsGroup;
+    this.scene.add(g);
+
+    const foil = new THREE.MeshStandardMaterial({ color: 0xd4aa3c, roughness: 0.35, metalness: 0.85, envMap: this.envMap });
+    const white = new THREE.MeshStandardMaterial({ color: 0xe6e3dc, roughness: 0.6 });
+    const dark = new THREE.MeshStandardMaterial({ color: 0x22252a, roughness: 0.7, metalness: 0.5 });
+    const glowBlue = new THREE.MeshStandardMaterial({ color: 0x111111, emissive: 0x4dc9f0, emissiveIntensity: 1.8 });
+
+    // 1. MEDA Environmental Station (Mars Environmental Dynamics Analyzer)
+    const medaX = l.x + 8.5, medaY = l.y + 6.0;
+    const medaGround = this.heightAt(medaX, medaY);
+    const medaMast = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 2.8, 8), dark);
+    medaMast.position.set(medaX, medaGround + 1.4, -medaY);
+    const medaHead = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.18, 0.28), white);
+    medaHead.position.set(medaX, medaGround + 2.7, -medaY);
+    const medaLabel = labelSprite("NASA MEDA Weather Mast", "#4dc9f0");
+    medaLabel.position.set(medaX, medaGround + 3.2, -medaY);
+    g.add(medaMast, medaHead, medaLabel);
+
+    // 2. MOXIE Oxygen In-Situ Resource Generator
+    const moxX = l.x + 7.0, moxY = l.y - 7.5;
+    const moxGround = this.heightAt(moxX, moxY);
+    const moxBox = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.7, 0.6), foil);
+    moxBox.position.set(moxX, moxGround + 0.35, -moxY);
+    const moxVent = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.15, 12), glowBlue);
+    moxVent.position.set(moxX, moxGround + 0.75, -moxY);
+    const moxLabel = labelSprite("NASA MOXIE O2 Unit", "#e0ad4a");
+    moxLabel.position.set(moxX, moxGround + 1.3, -moxY);
+    g.add(moxBox, moxVent, moxLabel);
+
+    // 3. RIMFAX Subsurface Radar Antenna
+    const rimX = l.x - 9.0, rimY = l.y + 7.0;
+    const rimGround = this.heightAt(rimX, rimY);
+    const rimAnt = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.15, 0.4), dark);
+    rimAnt.position.set(rimX, rimGround + 0.4, -rimY);
+    rimAnt.rotation.y = 0.4;
+    const rimLabel = labelSprite("NASA RIMFAX Radar", "#80e0a0");
+    rimLabel.position.set(rimX, rimGround + 1.1, -rimY);
+    g.add(rimAnt, rimLabel);
+
+    // 4. Radioisotope Thermoelectric Generator (RTG)
+    const rtgX = l.x - 14.0, rtgY = l.y - 4.0;
+    const rtgGround = this.heightAt(rtgX, rtgY);
+    const rtgCyl = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 1.1, 16), dark);
+    rtgCyl.position.set(rtgX, rtgGround + 0.55, -rtgY);
+    const rtgLabel = labelSprite("RTG Power Unit", "#ffaa44");
+    rtgLabel.position.set(rtgX, rtgGround + 1.6, -rtgY);
+    g.add(rtgCyl, rtgLabel);
+
+    this.disposables.push(foil, white, dark, glowBlue);
+  }
+
+  setDustStorm(level: "clear" | "hazy" | "storm"): void {
+    this.stormMode = level;
+    const fog = this.scene.fog as THREE.Fog;
+    const skyMat = this.sky.material as THREE.ShaderMaterial;
+
+    if (level === "clear") {
+      fog.near = 120;
+      fog.far = 1750;
+      fog.color.copy(HORIZON);
+      skyMat.uniforms.horizon.value.copy(HORIZON);
+      if (this.dustParticles) (this.dustParticles.material as THREE.PointsMaterial).opacity = 0.35;
+    } else if (level === "hazy") {
+      fog.near = 60;
+      fog.far = 850;
+      const hazeColor = new THREE.Color(0xcfa07a);
+      fog.color.copy(hazeColor);
+      skyMat.uniforms.horizon.value.copy(hazeColor);
+      if (this.dustParticles) (this.dustParticles.material as THREE.PointsMaterial).opacity = 0.70;
+    } else if (level === "storm") {
+      fog.near = 15;
+      fog.far = 280;
+      const stormColor = new THREE.Color(0xb8734a);
+      fog.color.copy(stormColor);
+      skyMat.uniforms.horizon.value.copy(stormColor);
+      if (this.dustParticles) (this.dustParticles.material as THREE.PointsMaterial).opacity = 0.95;
+    }
+  }
+
+  setContours(enabled: boolean): void {
+    if (enabled && !this.contourMesh && this.near) {
+      const geo = new THREE.WireframeGeometry(gridGeometry(this.near, 2));
+      const mat = new THREE.LineBasicMaterial({ color: 0x00e5ff, transparent: true, opacity: 0.28, fog: true });
+      this.contourMesh = new THREE.LineSegments(geo, mat);
+      this.contourMesh.position.y += 0.08;
+      this.scene.add(this.contourMesh);
+      this.disposables.push(geo, mat);
+    }
+    if (this.contourMesh) {
+      this.contourMesh.visible = enabled;
+    }
+  }
+
+  setInstrumentsVisible(visible: boolean): void {
+    this.instrumentsGroup.visible = visible;
   }
 
   private ribbon(points: [number, number][], width: number, lift: number): THREE.BufferGeometry {
@@ -844,6 +1012,7 @@ export class MarsScene {
 
     this.updateAstronaut(dt, now);
     this.updateCamera(dt);
+    this.updateDustParticles(dt);
     if (this.ring) {
       const pulse = 1 + 0.05 * Math.sin(this.clock * 2.4);
       this.ring.scale.set(pulse, pulse, 1);
