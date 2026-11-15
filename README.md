@@ -201,12 +201,35 @@ Follow this 5-stage walkthrough to showcase the entire platform during a live de
 
 ## 📚 Technical Documentation Directory
 
-- [**docs/DATA_SOURCES.md**](docs/DATA_SOURCES.md): Full citations for NASA-STD-3001, EVA-EXP-0034, HiRISE DTM `045994`, MSL/RAD, Mars 2020 instruments, and Apollo/ISS anomalies.
-- [**docs/TRUSTED_DATA_LAYER.md**](docs/TRUSTED_DATA_LAYER.md): Mathematical formulations for Gaussian trust scoring, rate derivative gates, cross-sensor divergence, and the 20 simulation use cases.
-- [**docs/MEDICAL_ML_GUIDE.md**](docs/MEDICAL_ML_GUIDE.md): Architecture of the 18-feature Random Forest classifier, 10,000 telemetry dataset, training instructions, and pre-simulation risk API.
-- [**docs/ARCHITECTURE.md**](docs/ARCHITECTURE.md): System architecture, layer separation, deterministic state machine, and WebSocket telemetry contracts.
-- [**docs/20_SIMULATION_USE_CASES.md**](docs/20_SIMULATION_USE_CASES.md): Bilingual operational manual for all 20 simulation test cases.
+### Requirements & Specifications
+- [**docs/PROJECT_OVERVIEW.md**](docs/PROJECT_OVERVIEW.md): Comprehensive system overview and feature status matrix.
+- [**docs/requirements/SRS.md**](docs/requirements/SRS.md): Full IEEE 830 Software Requirements Specification with 30+ functional requirements.
+- [**docs/requirements/MVP.md**](docs/requirements/MVP.md): MoSCoW prioritization and feature implementation classification.
+- [**docs/requirements/PROBLEM_STATEMENT.md**](docs/requirements/PROBLEM_STATEMENT.md): Scientific rationale and deep-space telemetry challenges.
+- [**docs/requirements/USE_CASES.md**](docs/requirements/USE_CASES.md): Detailed mission operational use cases.
+
+### Architecture, Design & APIs
+- [**docs/architecture/SYSTEM_ARCHITECTURE.md**](docs/architecture/SYSTEM_ARCHITECTURE.md): Complete architecture specification with Mermaid component and sequence diagrams.
+- [**docs/architecture/DATABASE_DESIGN.md**](docs/architecture/DATABASE_DESIGN.md): Database data dictionary and entity-relationship models.
+- [**docs/architecture/API_REFERENCE.md**](docs/architecture/API_REFERENCE.md): Full REST & WebSocket API reference with schemas and examples.
+- [**docs/SECURITY_AND_PRIVACY.md**](docs/SECURITY_AND_PRIVACY.md): Cryptographic security, RBAC privileges, and data privacy policy.
+- [**docs/TRUSTED_DATA_LAYER.md**](docs/TRUSTED_DATA_LAYER.md): Mathematical formulations for Gaussian trust scoring, rate derivative gates, and cross-sensor divergence.
+- [**docs/MEDICAL_ML_GUIDE.md**](docs/MEDICAL_ML_GUIDE.md): Architecture of the 18-feature Random Forest classifier, 10,000 telemetry dataset, and pre-simulation risk API.
 - [**docs/PHYSICAL_LAB_GUIDE.md**](docs/PHYSICAL_LAB_GUIDE.md): Engineering transducer calibration and failure injection guide.
+- [**docs/20_SIMULATION_USE_CASES.md**](docs/20_SIMULATION_USE_CASES.md): Bilingual operational manual for all 20 simulation test cases.
+
+### Deployment & Configuration
+- [**docs/deployment/INSTALLATION.md**](docs/deployment/INSTALLATION.md): Step-by-step setup guide for Windows, macOS/Linux, and Docker.
+- [**docs/deployment/ENVIRONMENT_CONFIGURATION.md**](docs/deployment/ENVIRONMENT_CONFIGURATION.md): Complete environment variable reference table.
+- [**docs/deployment/DEPLOYMENT.md**](docs/deployment/DEPLOYMENT.md): Deployment modes, network setup, mobile QR pairing, and Docker configuration.
+
+### Verification, Licenses & NASA Submission
+- [**docs/testing/TEST_PLAN.md**](docs/testing/TEST_PLAN.md): Test pyramid, methodologies, and quality gates.
+- [**docs/testing/TEST_REPORT.md**](docs/testing/TEST_REPORT.md): Automated test execution report (97/97 passed).
+- [**docs/references/NASA_DATA_AND_REFERENCES.md**](docs/references/NASA_DATA_AND_REFERENCES.md): NASA open science datasets and standards citations.
+- [**docs/references/AI_USAGE_DISCLOSURE.md**](docs/references/AI_USAGE_DISCLOSURE.md): Complete disclosure of runtime and development AI tools.
+- [**docs/references/THIRD_PARTY_LICENSES.md**](docs/references/THIRD_PARTY_LICENSES.md): Full intellectual property and open-source license audit.
+- [**submission/**](submission/): NASA Space Apps Challenge 2026 official submission materials.
 
 ---
 
@@ -215,14 +238,14 @@ Follow this 5-stage walkthrough to showcase the entire platform during a live de
 ASTRA features comprehensive unit, integration, and ML validation test suites:
 
 ```powershell
-# Run backend pytest suite (92 tests)
+# Run backend pytest suite (97 tests)
 backend\.venv\Scripts\python -m pytest backend/tests
 
 # Run frontend TypeScript type-check and production build
 npm --prefix frontend run build
 ```
 
-*All 92 backend tests pass with 100% success rate, and the frontend builds cleanly with zero TypeScript errors.*
+*All 97 backend tests pass with 100% success rate, and the frontend builds cleanly with zero TypeScript errors.*
 
 ---
 

@@ -1,0 +1,15 @@
+# ASTRA — Project License Status
+
+> [!IMPORTANT]
+> **LICENSE STATUS: PENDING TEAM SELECTION (RELEASE BLOCKER)**
+>
+> The formal open-source license for the ASTRA codebase has not yet been selected by the Gravity Brains development team.
+> Prior to the official public release of this repository for the NASA Space Apps Challenge 2026, the team must designate an approved open-source license.
+
+### Recommended Open-Source Licenses for Consideration:
+1. **MIT License**: Maximizes permissiveness, enabling educational, scientific, and community adoption with standard liability disclaimers.
+2. **Apache License 2.0**: Provides permissive usage while granting explicit contributor patent rights and trademark protections.
+
+All third-party libraries, datasets, and fonts bundled or referenced by this project remain under their respective original open-source licenses, detailed in `docs/references/THIRD_PARTY_LICENSES.md`.
+
+Copyright (c) 2026 Gravity Brains / ASTRA Pioneers. All rights reserved pending open-source licensing declaration.

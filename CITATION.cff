@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: "If you use or reference ASTRA in your research or project, please cite it as below."
+title: "ASTRA: Trustworthy Astronaut Health Monitoring & Mars Mission Simulation Platform"
+authors:
+  - family-names: "Hammoud"
+    given-names: "Sondos"
+    role: "Biomedical Instrumentation & Reliability Lead"
+  - family-names: "Team Gravity Brains"
+    given-names: "ASTRA Pioneers"
+repository-code: "https://github.com/Mouhamad-MouSou-23278/ASTRA-MouSou"
+url: "https://github.com/Mouhamad-MouSou-23278/ASTRA-MouSou"
+abstract: >-
+  ASTRA is an open-source autonomous astronaut health monitoring and Mars mission
+  simulation platform developed for the NASA Space Apps Challenge 2026. Featuring
+  a deterministic Trusted Data Layer (TDL) to suppress physical sensor artifacts,
+  an 18-feature Random Forest clinical triage model, and an authentic 3D Jezero Crater
+  surface simulation built on NASA HiRISE stereo topography, ASTRA addresses the
+  22-minute Earth-Mars communication latency by providing earth-independent medical
+  decision support conforming to NASA-STD-3001.
+keywords:
+  - "NASA Space Apps Challenge 2026"
+  - "Astronaut Health Monitoring"
+  - "Mars Mission Simulation"
+  - "Trusted Data Layer"
+  - "Space Medicine"
+  - "NASA-STD-3001"
+  - "FastAPI"
+  - "Three.js"
+version: "2.5.0-Audited"
+date-released: "2026-11-15"
+license: "TBD"
