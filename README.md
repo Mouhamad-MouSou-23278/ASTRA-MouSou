@@ -1,5 +1,5 @@
 # ASTRA — Autonomous Astronaut Health Monitoring & Mars Mission Simulation
-## منصة أسترا: المراقبة الصحية الذاتية لرواد الفضاء ومحاكاة مهام المريخ
+
 
 ASTRA is a mission-critical platform providing **real-time autonomous astronaut health monitoring, 3D Mars surface operations, an AI medical decision engine, and a multi-stage Trusted Data Layer (TDL)**. Operating on authentic **NASA Jezero Crater HiRISE topography** and compliant with **NASA-STD-3001** space flight standards, ASTRA resolves the 14-to-22 minute Earth-Mars communication blackout through deterministic edge simulation, machine learning triage, and autonomous life-support countermeasures.
 
