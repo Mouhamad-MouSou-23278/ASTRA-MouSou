@@ -278,10 +278,10 @@ export function OperatorPage() {
 }
 
 // ----------------------------------------------------------- session console
-interface ViewerToken { id: number; label: string; created_by: string; expires_at: string; use_count: number; state: string }
-interface CreatedToken extends ViewerToken { token: string; url: string; qr_svg: string }
+export interface ViewerToken { id: number; label: string; created_by: string; expires_at: string; use_count: number; state: string }
+export interface CreatedToken extends ViewerToken { token: string; url: string; qr_svg: string }
 
-function QrModal({ sessionId, onClose }: { sessionId: string; onClose: () => void }) {
+export function QrModal({ sessionId, onClose }: { sessionId: string; onClose: () => void }) {
   const tokens = useLoad(() => api<ViewerToken[]>(`/sessions/${sessionId}/viewer-tokens`), [sessionId]);
   const [label, setLabel] = useState("Judges");
   const [ttl, setTtl] = useState("");
@@ -379,6 +379,19 @@ function Controls({ detail, store }: { detail: SessionDetail; store: SessionStor
             </select>
           </label>
           <button className="btn" onClick={() => setQr(true)}>▦ Viewer QR</button>
+          <button
+            className="btn"
+            title="Fullscreen Presentation (F11)"
+            onClick={() => {
+              if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen?.().catch(() => undefined);
+              } else {
+                document.exitFullscreen?.().catch(() => undefined);
+              }
+            }}
+          >
+            ⛶ Fullscreen
+          </button>
         </div>
       </div>
       <ErrorBanner error={act.error} />

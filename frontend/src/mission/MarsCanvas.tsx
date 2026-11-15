@@ -7,6 +7,8 @@ import { useStoreVersion, type SessionStore } from "./store";
 const CAMERAS: { id: CameraMode; label: string; title: string }[] = [
   { id: "third", label: "3rd person", title: "Follow behind the astronaut" },
   { id: "first", label: "1st person", title: "Helmet view" },
+  { id: "rover", label: "Perseverance", title: "NASA Mars 2020 Perseverance Rover" },
+  { id: "ingenuity", label: "Ingenuity", title: "NASA Ingenuity Mars Helicopter View" },
   { id: "overview", label: "Overview", title: "Whole route from above" },
   { id: "closeup", label: "Close-up", title: "Close view of the astronaut" },
 ];
@@ -30,6 +32,9 @@ export function MarsCanvas({ detail, store }: { detail: SessionDetail; store: Se
   const [terrain, setTerrain] = useState<TerrainMeta | null>(null);
   const [quality, setQuality] = useState<Quality>(() =>
     window.matchMedia("(max-width: 800px)").matches ? "low" : "high");
+  const [weather, setWeather] = useState<"clear" | "hazy" | "storm">("clear");
+  const [contours, setContours] = useState(false);
+  const [showInstruments, setShowInstruments] = useState(true);
   const version = useStoreVersion(store, 250);
 
   // Build the scene once per session (and again if the quality level is changed).
@@ -131,9 +136,37 @@ export function MarsCanvas({ detail, store }: { detail: SessionDetail; store: Se
           ))}
           <button className="btn sm" title="Reset this camera" onClick={() => sceneRef.current?.resetCamera()}>⟲</button>
         </div>
-        <div className="small hint" style={{ marginTop: 6, color: "#f3e6dccc" }}>drag to look · scroll / pinch to zoom</div>
+        <div className="row gap-xs" style={{ marginTop: 6, justifyContent: "flex-end" }}>
+          {(["clear", "hazy", "storm"] as const).map((w) => (
+            <button key={w} className={`btn sm ${weather === w ? "active" : ""}`} style={{ fontSize: 11, padding: "2px 6px" }}
+              onClick={() => { setWeather(w); sceneRef.current?.setDustStorm(w); }}>
+              {w === "clear" ? "☀️ Sol" : w === "hazy" ? "🌫️ Haze" : "🌪️ Storm"}
+            </button>
+          ))}
+          <button className={`btn sm ${contours ? "active" : ""}`} style={{ fontSize: 11, padding: "2px 6px" }}
+            title="Toggle HiRISE topographic contour lines"
+            onClick={() => { const next = !contours; setContours(next); sceneRef.current?.setContours(next); }}>
+            📐 Contours
+          </button>
+          <button className={`btn sm ${showInstruments ? "active" : ""}`} style={{ fontSize: 11, padding: "2px 6px" }}
+            title="Toggle NASA surface scientific instruments"
+            onClick={() => { const next = !showInstruments; setShowInstruments(next); sceneRef.current?.setInstrumentsVisible(next); }}>
+            🛰️ NASA Units
+          </button>
+        </div>
+        <div className="small hint" style={{ marginTop: 4, color: "#f3e6dccc" }}>drag to look · scroll / pinch to zoom</div>
       </div>
       <div className="hud bl">
+        {mode === "rover" && (
+          <div className="small" style={{ color: "#ffd276", fontWeight: "bold", marginBottom: 4 }}>
+            🛰️ NASA Mars 2020: Perseverance Rover · Mastcam-Z & SuperCam Active · Sample Caching Tube #04
+          </div>
+        )}
+        {mode === "ingenuity" && (
+          <div className="small" style={{ color: "#9fe8ff", fontWeight: "bold", marginBottom: 4 }}>
+            🚁 NASA Ingenuity Mars Helicopter (Ginny) · Aerial Reconnaissance Vantage · Coaxial Rotors Spinning
+          </div>
+        )}
         {a && (
           <div className="small">
             {a.outside ? <>E {a.x.toFixed(1)} m · N {a.y.toFixed(1)} m · HDG {a.heading.toFixed(0)}° {compass}</> : "Inside lander"}

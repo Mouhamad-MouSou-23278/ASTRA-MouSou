@@ -125,17 +125,48 @@ export function LineChart({ series, version, spark, windowS, height }: {
       ctx.setLineDash([]);
     }
 
-    ctx.strokeStyle = COLORS.line;
-    ctx.lineWidth = spark ? 1.2 : 1.6;
-    ctx.lineJoin = "round";
-    ctx.beginPath();
-    let pen = false;
+    // Telemetry trace: first pass subtle neon glow, second pass crisp telemetry line
+    const points: [number, number][] = [];
     for (let i = start; i < n; i += stride) {
       const x = v[i];
-      if (x === null || (q && q[i] >= 2)) { pen = false; continue; }   // gap: no trusted reading
-      if (pen) ctx.lineTo(X(t[i]), Y(x)); else { ctx.moveTo(X(t[i]), Y(x)); pen = true; }
+      if (x !== null && (!q || q[i] < 2)) {
+        points.push([X(t[i]), Y(x)]);
+      }
     }
-    ctx.stroke();
+
+    if (points.length > 1) {
+      // Glow underlay for high-tech telemetry HUD look
+      if (!spark) {
+        ctx.strokeStyle = "rgba(77, 201, 240, 0.22)";
+        ctx.lineWidth = 4.5;
+        ctx.lineJoin = "round";
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(points[0][0], points[0][1]);
+        for (let i = 1; i < points.length; i++) {
+          const xc = (points[i - 1][0] + points[i][0]) / 2;
+          const yc = (points[i - 1][1] + points[i][1]) / 2;
+          ctx.quadraticCurveTo(points[i - 1][0], points[i - 1][1], xc, yc);
+        }
+        ctx.lineTo(points[points.length - 1][0], points[points.length - 1][1]);
+        ctx.stroke();
+      }
+
+      // Main crisp telemetry stroke with Bezier smoothing
+      ctx.strokeStyle = COLORS.line;
+      ctx.lineWidth = spark ? 1.4 : 1.8;
+      ctx.lineJoin = "round";
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(points[0][0], points[0][1]);
+      for (let i = 1; i < points.length; i++) {
+        const xc = (points[i - 1][0] + points[i][0]) / 2;
+        const yc = (points[i - 1][1] + points[i][1]) / 2;
+        ctx.quadraticCurveTo(points[i - 1][0], points[i - 1][1], xc, yc);
+      }
+      ctx.lineTo(points[points.length - 1][0], points[points.length - 1][1]);
+      ctx.stroke();
+    }
 
     if (q) {
       for (let i = start; i < n; i++) {

@@ -50,7 +50,34 @@ def get_db() -> Iterator[Session]:
         db.close()
 
 
+def _migrate_tables(eng: Engine) -> None:
+    """Safely add additive columns to existing tables without requiring a fresh database."""
+    from sqlalchemy import inspect, text
+
+    insp = inspect(eng)
+    if not insp.has_table("sensors"):
+        return
+    existing = {c["name"] for c in insp.get_columns("sensors")}
+    new_cols = [
+        ("sensor_family", "VARCHAR(60) DEFAULT 'generic'"),
+        ("manufacturer", "VARCHAR(120) DEFAULT ''"),
+        ("model_number", "VARCHAR(80) DEFAULT ''"),
+        ("technical_specs", "JSON DEFAULT '{}'"),
+        ("tags", "JSON DEFAULT '[]'"),
+        ("io_contract", "JSON DEFAULT '{}'"),
+        ("placement_data", "JSON DEFAULT '{}'"),
+        ("physics_config", "JSON DEFAULT '{}'"),
+        ("error_configs", "JSON DEFAULT '[]'"),
+        ("environmental_sensitivities", "JSON DEFAULT '[]'"),
+    ]
+    with eng.begin() as conn:
+        for col_name, col_type in new_cols:
+            if col_name not in existing:
+                conn.execute(text(f"ALTER TABLE sensors ADD COLUMN {col_name} {col_type}"))
+
+
 def init_db() -> None:
     from . import models  # noqa: F401  (register tables)
 
     Base.metadata.create_all(engine)
+    _migrate_tables(engine)

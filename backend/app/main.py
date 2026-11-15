@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from .api import admin, auth, medical, mission, physical
+from .api import admin, auth, medical, mission, physical, physical_lab
 from .config import APP_NAME, APP_VERSION, DATA_LABEL, get_settings
 from .db import SessionLocal, init_db
 from .seed import seed
@@ -60,7 +60,7 @@ def create_app() -> FastAPI:
         response.headers.setdefault("Referrer-Policy", "no-referrer")
         return response
 
-    for module in (auth, admin, physical, medical, mission):
+    for module in (auth, admin, physical, physical_lab, medical, mission):
         app.include_router(module.router, prefix="/api")
 
     @app.get("/api/health", tags=["system"])

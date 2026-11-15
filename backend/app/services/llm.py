@@ -127,6 +127,81 @@ class OpenAICompatibleProvider:
         return text.strip()
 
 
+class GroqProvider(OpenAICompatibleProvider):
+    DEFAULT_MODEL = "llama-3.3-70b-versatile"
+
+    def __init__(self, api_key: str, model: str, timeout_s: float) -> None:
+        super().__init__(
+            base_url="https://api.groq.com/openai/v1",
+            api_key=api_key,
+            model=model or self.DEFAULT_MODEL,
+            timeout_s=timeout_s,
+        )
+        self.name = f"groq:{self.model}"
+
+
+class GeminiProvider:
+    """Google Gemini via REST API."""
+
+    DEFAULT_MODEL = "gemini-1.5-flash"
+
+    def __init__(self, api_key: str, model: str, timeout_s: float) -> None:
+        if not api_key:
+            raise LLMError("Gemini requires GEMINI_API_KEY or ASTRA_LLM_API_KEY")
+        self.api_key = api_key
+        self.model = model or self.DEFAULT_MODEL
+        self.timeout = timeout_s
+        self.name = f"gemini:{self.model}"
+        self._url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent?key={self.api_key}"
+
+    def complete(self, system: str, messages: list[dict[str, str]]) -> str:
+        contents = []
+        if system:
+            contents.append({"role": "user", "parts": [{"text": f"SYSTEM INSTRUCTION: {system}"}]})
+            contents.append({"role": "model", "parts": [{"text": "Understood. I will follow all instructions."}]})
+        for m in messages:
+            role = "model" if m["role"] == "assistant" else "user"
+            contents.append({"role": role, "parts": [{"text": m["content"]}]})
+
+        payload = {"contents": contents, "generationConfig": {"temperature": 0.2, "maxOutputTokens": 4096}}
+        try:
+            resp = httpx.post(self._url, json=payload, timeout=self.timeout)
+            resp.raise_for_status()
+            data = resp.json()
+            return data["candidates"][0]["content"]["parts"][0]["text"].strip()
+        except Exception as exc:
+            raise LLMError(f"Gemini API error: {exc}") from exc
+
+
+class OpenRouterProvider(OpenAICompatibleProvider):
+    """OpenRouter API provider offering access to free and premium models.
+
+    Free models available on OpenRouter:
+    - meta-llama/llama-3.3-70b-instruct:free
+    - google/gemini-2.0-flash-exp:free
+    - mistralai/mistral-7b-instruct:free
+    - qwen/qwen-2.5-72b-instruct:free
+    """
+
+    DEFAULT_MODEL = "meta-llama/llama-3.3-70b-instruct:free"
+
+    def __init__(self, api_key: str, model: str, timeout_s: float) -> None:
+        if not api_key:
+            raise LLMError("OpenRouter requires OPENROUTER_API_KEY or ASTRA_LLM_API_KEY")
+        super().__init__(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=api_key,
+            model=model or self.DEFAULT_MODEL,
+            timeout_s=timeout_s,
+        )
+        self.name = f"openrouter:{self.model}"
+        # Set required and recommended OpenRouter headers
+        self._headers.update({
+            "HTTP-Referer": "https://astra-mars.app",
+            "X-Title": "ASTRA — Mars Mission & Astronaut Health",
+        })
+
+
 _cache: dict[tuple, tuple[Optional[LLMProvider], str]] = {}
 
 
@@ -138,9 +213,22 @@ def _build() -> tuple[Optional[LLMProvider], str]:
     try:
         if provider == "anthropic":
             return AnthropicProvider(s.llm_model, s.llm_timeout_s), "ready"
-        if provider == "openai_compatible":
+        if provider in ("gemini", "google"):
+            import os
+            key = s.llm_api_key or os.getenv("GEMINI_API_KEY", "")
+            return GeminiProvider(key, s.llm_model, s.llm_timeout_s), "ready"
+        if provider == "groq":
+            import os
+            key = s.llm_api_key or os.getenv("GROQ_API_KEY", "")
+            return GroqProvider(key, s.llm_model, s.llm_timeout_s), "ready"
+        if provider in ("openrouter", "open_router"):
+            import os
+            key = s.llm_api_key or os.getenv("OPENROUTER_API_KEY", "")
+            return OpenRouterProvider(key, s.llm_model, s.llm_timeout_s), "ready"
+        if provider in ("openai_compatible", "openai"):
+            base = s.llm_base_url or ("https://api.openai.com/v1" if provider == "openai" else "")
             return (
-                OpenAICompatibleProvider(s.llm_base_url, s.llm_api_key, s.llm_model, s.llm_timeout_s),
+                OpenAICompatibleProvider(base, s.llm_api_key, s.llm_model, s.llm_timeout_s),
                 "ready",
             )
         return None, f"Unknown ASTRA_LLM_PROVIDER '{s.llm_provider}'; using the local engine."

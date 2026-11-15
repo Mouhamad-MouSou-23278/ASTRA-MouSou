@@ -11,7 +11,7 @@ from astra_sim import AGGREGATIONS, CHANNELS, FAULT_TYPES
 UTC = Annotated[datetime, PlainSerializer(lambda d: d.isoformat(timespec="seconds") + "Z")]
 
 Role = Literal["admin", "physical", "medical", "operator", "viewer"]
-Category = Literal["physiological", "spacesuit", "environmental"]
+Category = str
 SensorStatus = Literal["draft", "active", "archived"]
 Severity = Literal["advisory", "caution", "warning", "critical"]
 FaultType = Literal["spike", "drift", "stuck", "disconnect", "noise_burst", "bias"]
@@ -140,9 +140,54 @@ class ProfileOut(ORM):
     notes: str
 
 
+class ElectricalSpecs(Strict):
+    voltage_v: Optional[float] = None
+    voltage_min_v: Optional[float] = None
+    voltage_max_v: Optional[float] = None
+    current_ma: Optional[float] = None
+    power_mw: Optional[float] = None
+
+
+class PhysicalDimensions(Strict):
+    length_mm: Optional[float] = None
+    width_mm: Optional[float] = None
+    height_mm: Optional[float] = None
+    weight_g: Optional[float] = None
+    housing_material: Optional[str] = Field(None, max_length=120)
+
+
+class OperatingEnvelope(Strict):
+    temp_min_c: Optional[float] = None
+    temp_max_c: Optional[float] = None
+    pressure_min_kpa: Optional[float] = None
+    pressure_max_kpa: Optional[float] = None
+
+
+class MetrologySpecs(Strict):
+    measurement_type: Optional[str] = Field(None, max_length=80)
+    precision: Optional[float] = None
+    sensitivity: Optional[float] = None
+    response_time_s: Optional[float] = None
+    sampling_frequency_hz: Optional[float] = None
+    calibration_interval_days: Optional[int] = None
+    expected_lifetime_hours: Optional[int] = None
+
+
+class TechnicalSpecs(Strict):
+    electrical: Optional[ElectricalSpecs] = Field(default_factory=ElectricalSpecs)
+    physical: Optional[PhysicalDimensions] = Field(default_factory=PhysicalDimensions)
+    operating_envelope: Optional[OperatingEnvelope] = Field(default_factory=OperatingEnvelope)
+    metrology: Optional[MetrologySpecs] = Field(default_factory=MetrologySpecs)
+    extra: dict[str, Any] = Field(default_factory=dict)
+
+
 class _SensorCore(Strict):
     name: str = Field(min_length=1, max_length=120)
-    category: Category
+    category: Category = Field(min_length=1, max_length=60)
+    sensor_family: str = Field("generic", max_length=60)
+    manufacturer: str = Field("", max_length=120)
+    model_number: str = Field("", max_length=80)
+    tags: list[str] = Field(default_factory=list, max_length=50)
     unit: str = Field("", max_length=30)
     channel: Optional[str] = None
     description: str = Field("", max_length=2000)
@@ -151,6 +196,7 @@ class _SensorCore(Strict):
     accuracy: float = Field(0.0, ge=0)
     max_rate_per_min: float = Field(0.0, ge=0)
     resolution: float = Field(0.0, ge=0)
+    technical_specs: dict[str, Any] = Field(default_factory=dict)
     custom_fields: dict[str, Any] = Field(default_factory=dict)
     change_note: str = Field("", max_length=300)
 
@@ -175,6 +221,12 @@ class SensorUpdate(_SensorCore):
     key: Optional[str] = None
 
 
+class SensorDuplicateIn(Strict):
+    new_key: Optional[str] = Field(None, pattern=KEY)
+    new_name: Optional[str] = Field(None, min_length=1, max_length=120)
+    change_note: str = Field("Duplicated sensor", max_length=300)
+
+
 class SensorStatusIn(Strict):
     status: SensorStatus
     change_note: str = Field("", max_length=300)
@@ -185,6 +237,10 @@ class SensorOut(ORM):
     key: str
     name: str
     category: str
+    sensor_family: str = "generic"
+    manufacturer: str = ""
+    model_number: str = ""
+    tags: list[str] = Field(default_factory=list)
     unit: str
     channel: Optional[str]
     description: str
@@ -195,6 +251,7 @@ class SensorOut(ORM):
     resolution: float
     status: str
     version: int
+    technical_specs: dict[str, Any] = Field(default_factory=dict)
     custom_fields: dict[str, Any]
     updated_at: UTC
     updated_by: str

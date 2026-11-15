@@ -77,6 +77,9 @@ export function WatchPage() {
   );
 }
 
+import { DoctorExaminerConsole } from "../components/DoctorExaminerConsole";
+import { useSessionStream } from "../mission/store";
+
 /**
  * Instrument Viewer reached by scanning a QR code. There is no login: the token
  * in the URL is exchanged for the one session it is allowed to watch.
@@ -86,6 +89,7 @@ export function ViewerPage() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [expires, setExpires] = useState<string | null>(null);
   const [error, setError] = useState<unknown>(null);
+  const [viewMode, setViewMode] = useState<"mission" | "doctor">("doctor");
 
   useEffect(() => {
     setSessionId(null);
@@ -95,10 +99,26 @@ export function ViewerPage() {
       .catch(setError);
   }, [token]);
 
+  const stream = useSessionStream(sessionId, { viewerToken: token });
+
   return (
     <div className="app">
       <header className="topbar">
         <Brand sub="INSTRUMENT VIEWER" />
+        <div className="row gap-xs" style={{ margin: "0 16px" }}>
+          <button
+            className={`btn sm ${viewMode === "doctor" ? "primary" : ""}`}
+            onClick={() => setViewMode("doctor")}
+          >
+            🩺 Doctor / Clinical Mode
+          </button>
+          <button
+            className={`btn sm ${viewMode === "mission" ? "primary" : ""}`}
+            onClick={() => setViewMode("mission")}
+          >
+            🛰️ 3D Mission Scene
+          </button>
+        </div>
         <span className="grow" />
         <span className="sim-banner">SIMULATED DATA</span>
       </header>
@@ -113,9 +133,13 @@ export function ViewerPage() {
               </div>
             </div>
           </div>
-        ) : sessionId ? (
+        ) : sessionId && stream.detail ? (
           <>
-            <MissionView sessionId={sessionId} access={{ viewerToken: token }} />
+            {viewMode === "doctor" ? (
+              <DoctorExaminerConsole detail={stream.detail} store={stream.store} />
+            ) : (
+              <MissionView sessionId={sessionId} access={{ viewerToken: token }} />
+            )}
             <p className="muted small" style={{ marginTop: 10 }}>
               Read-only access to this session only{expires ? `, valid until ${fmtDate(expires)}` : ""}. Camera and panel choices stay on this device.
             </p>
