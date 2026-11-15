@@ -173,6 +173,35 @@ class GeminiProvider:
             raise LLMError(f"Gemini API error: {exc}") from exc
 
 
+class OpenRouterProvider(OpenAICompatibleProvider):
+    """OpenRouter API provider offering access to free and premium models.
+
+    Free models available on OpenRouter:
+    - meta-llama/llama-3.3-70b-instruct:free
+    - google/gemini-2.0-flash-exp:free
+    - mistralai/mistral-7b-instruct:free
+    - qwen/qwen-2.5-72b-instruct:free
+    """
+
+    DEFAULT_MODEL = "meta-llama/llama-3.3-70b-instruct:free"
+
+    def __init__(self, api_key: str, model: str, timeout_s: float) -> None:
+        if not api_key:
+            raise LLMError("OpenRouter requires OPENROUTER_API_KEY or ASTRA_LLM_API_KEY")
+        super().__init__(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=api_key,
+            model=model or self.DEFAULT_MODEL,
+            timeout_s=timeout_s,
+        )
+        self.name = f"openrouter:{self.model}"
+        # Set required and recommended OpenRouter headers
+        self._headers.update({
+            "HTTP-Referer": "https://astra-mars.app",
+            "X-Title": "ASTRA — Mars Mission & Astronaut Health",
+        })
+
+
 _cache: dict[tuple, tuple[Optional[LLMProvider], str]] = {}
 
 
@@ -192,6 +221,10 @@ def _build() -> tuple[Optional[LLMProvider], str]:
             import os
             key = s.llm_api_key or os.getenv("GROQ_API_KEY", "")
             return GroqProvider(key, s.llm_model, s.llm_timeout_s), "ready"
+        if provider in ("openrouter", "open_router"):
+            import os
+            key = s.llm_api_key or os.getenv("OPENROUTER_API_KEY", "")
+            return OpenRouterProvider(key, s.llm_model, s.llm_timeout_s), "ready"
         if provider in ("openai_compatible", "openai"):
             base = s.llm_base_url or ("https://api.openai.com/v1" if provider == "openai" else "")
             return (

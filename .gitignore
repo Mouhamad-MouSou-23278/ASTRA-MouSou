@@ -18,7 +18,21 @@ data/raw/
 
 # Secrets and local configuration
 .env
+.env.*
+!.env.example
 backend/.env
+
+# Local recovery points
+_recovery_backup/
+
+# Coverage and caches
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+*.tmp
+*.log
+
 
 # OS / editor
 .DS_Store

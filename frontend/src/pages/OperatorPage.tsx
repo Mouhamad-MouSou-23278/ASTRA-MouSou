@@ -379,6 +379,19 @@ function Controls({ detail, store }: { detail: SessionDetail; store: SessionStor
             </select>
           </label>
           <button className="btn" onClick={() => setQr(true)}>▦ Viewer QR</button>
+          <button
+            className="btn"
+            title="Fullscreen Presentation (F11)"
+            onClick={() => {
+              if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen?.().catch(() => undefined);
+              } else {
+                document.exitFullscreen?.().catch(() => undefined);
+              }
+            }}
+          >
+            ⛶ Fullscreen
+          </button>
         </div>
       </div>
       <ErrorBanner error={act.error} />

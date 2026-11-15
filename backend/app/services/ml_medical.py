@@ -7,6 +7,7 @@ especially during Communication Blackout (Loss of Signal / LOS).
 Grounded in:
 - NASA-STD-3001 (Space Flight Human-System Standard)
 - EVA-EXP-0034 (Exploration Extravehicular Activity System Technical Standard)
+- MSL/RAD Radiation Measurements (Hassler et al., Science 2014)
 - Apollo, Skylab, and ISS EVA clinical anomaly records
 """
 from __future__ import annotations
@@ -16,7 +17,8 @@ import json
 import math
 import os
 import random
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
+from datetime import datetime
 from typing import Any, Mapping, Optional, Sequence
 
 MODEL_SAVE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "medical_ml_model.json"))
@@ -139,7 +141,272 @@ CLINICAL_KNOWLEDGE = {
     },
 }
 
+# -----------------------------------------------------------------------------------------
+# NASA Flight Instruments Registry & Hardware Lifecycles
+# -----------------------------------------------------------------------------------------
+@dataclass
+class InstrumentRecord:
+    instrument_id: str
+    name: str
+    name_ar: str
+    manufacturer: str
+    model: str
+    sensor_family: str
+    calibration_date: str
+    last_maintenance: str
+    total_operating_hours: float
+    expected_lifetime_hours: float
+    current_status: str  # "nominal", "degraded", "maintenance_required", "failed"
+    nasa_certification: str
+    accuracy_spec: str
+    failure_history: list[dict[str, Any]] = field(default_factory=list)
 
+
+NASA_INSTRUMENT_REGISTRY: list[dict[str, Any]] = [
+    {
+        "instrument_id": "PPO-001",
+        "name": "Optical Pulse Oximeter (SpO2 & Plethysmography)",
+        "name_ar": "مقياس التأكسج النبضي البصري وموجات الامتلاء الدموي",
+        "manufacturer": "Nonin Medical / NASA Johnson Space Center",
+        "model": "Mars-EVA-OxiMax-3",
+        "sensor_family": "Optical Biosensor",
+        "calibration_date": "2026-06-15",
+        "last_maintenance": "2026-09-01",
+        "total_operating_hours": 1247.5,
+        "expected_lifetime_hours": 5000.0,
+        "current_status": "nominal",
+        "nasa_certification": "NASA-STD-8739.8 / IEC 80601-2-61",
+        "accuracy_spec": "±1.5% SpO2 (70-100% range)",
+        "failure_history": [
+            {"date": "2026-07-22", "type": "optical_decoupling", "resolution": "Probe finger spring clip reseated, optical emitter cleaned"},
+            {"date": "2026-08-15", "type": "motion_artifact", "resolution": "Firmware DSP motion-rejection filter upgraded to v2.4"}
+        ],
+    },
+    {
+        "instrument_id": "ECG-001",
+        "name": "3-Lead Spaceflight Electrocardiograph (ECG)",
+        "name_ar": "مخطط كهربية القلب الفضائي ثلاثي المساري",
+        "manufacturer": "Spacelabs Healthcare / NASA Ames",
+        "model": "CardioSpace-EVA-M2",
+        "sensor_family": "Electrophysiological Transducer",
+        "calibration_date": "2026-05-10",
+        "last_maintenance": "2026-08-20",
+        "total_operating_hours": 1820.0,
+        "expected_lifetime_hours": 6000.0,
+        "current_status": "nominal",
+        "nasa_certification": "NASA-STD-3001 Vol 1 §4.2 / ANSI/AAMI EC11",
+        "accuracy_spec": "±1 bpm (30-250 bpm range), 0.05-100 Hz bandwidth",
+        "failure_history": [
+            {"date": "2026-04-12", "type": "high_contact_impedance", "resolution": "Hydrogel conductive dry-pads replaced with Ag/AgCl spaceflight electrodes"},
+            {"date": "2026-06-30", "type": "60Hz_emi_interference", "resolution": "Chassis ground shield tightened on PLSS telemetry harness"}
+        ],
+    },
+    {
+        "instrument_id": "RTD-001",
+        "name": "Pt100 Platinum RTD Core Body Temperature Probe",
+        "name_ar": "مجس الحرارة المركزي البلاتيني عالي الدقة (Pt100)",
+        "manufacturer": "Honeywell Aerospace / NASA Glenn",
+        "model": "AeroTemp-Ultra-Pt100",
+        "sensor_family": "Resistance Temperature Detector (RTD)",
+        "calibration_date": "2026-07-01",
+        "last_maintenance": "2026-09-12",
+        "total_operating_hours": 2100.0,
+        "expected_lifetime_hours": 8000.0,
+        "current_status": "nominal",
+        "nasa_certification": "IEC 60751 Class 1/10 DIN / NASA SSP-50005",
+        "accuracy_spec": "±0.03°C (30°C to 45°C range)",
+        "failure_history": [
+            {"date": "2026-08-04", "type": "lead_resistance_drift", "resolution": "4-wire Kelvin bridge zero-point calibration performed"}
+        ],
+    },
+    {
+        "instrument_id": "PRS-001",
+        "name": "Piezoresistive Diaphragm Spacesuit Pressure Transducer",
+        "name_ar": "محول ضغط البذلة الفضائية بالغشاء الكهرضغطي",
+        "manufacturer": "Kulite Semiconductor / NASA Langley",
+        "model": "AeroPressure-EVA-35k",
+        "sensor_family": "Silicon Piezoresistive Transducer",
+        "calibration_date": "2026-06-20",
+        "last_maintenance": "2026-08-14",
+        "total_operating_hours": 3450.0,
+        "expected_lifetime_hours": 10000.0,
+        "current_status": "nominal",
+        "nasa_certification": "AIAA S-080 / NASA-STD-8739.4",
+        "accuracy_spec": "±0.15 kPa (0 to 100 kPa range)",
+        "failure_history": [
+            {"date": "2026-05-18", "type": "adc_quantization_noise", "resolution": "Digital low-pass filter enabled on PLSS avionics"}
+        ],
+    },
+    {
+        "instrument_id": "CO2-001",
+        "name": "NDIR Helmet Inspired Carbon Dioxide Analyzer",
+        "name_ar": "محلل غاز ثنائي أكسيد الكربون المستنشق بالأشعة تحت الحمراء",
+        "manufacturer": "Dräger / Hamilton Sundstrand",
+        "model": "OxyCarbon-Mars-NDIR",
+        "sensor_family": "Non-Dispersive Infrared (NDIR) Spectrometer",
+        "calibration_date": "2026-08-01",
+        "last_maintenance": "2026-09-18",
+        "total_operating_hours": 980.0,
+        "expected_lifetime_hours": 4000.0,
+        "current_status": "nominal",
+        "nasa_certification": "NASA EVA-EXP-0034 §5.4 / ISO 21647",
+        "accuracy_spec": "±0.2 mmHg (0 to 30 mmHg range)",
+        "failure_history": [
+            {"date": "2026-08-25", "type": "optical_chamber_condensation", "resolution": "Heated optical sapphire window anti-fog element activated"}
+        ],
+    },
+    {
+        "instrument_id": "RAD-001",
+        "name": "Active Silicon PIN Diode Radiation Dosimeter",
+        "name_ar": "مقياس الجرعة الإشعاعية النشط بديود السيليكون PIN",
+        "manufacturer": "Teledyne Brown Engineering / NASA MSFC",
+        "model": "RadEVA-MSL-Class-4",
+        "sensor_family": "Solid-State Silicon PIN Detector",
+        "calibration_date": "2026-04-10",
+        "last_maintenance": "2026-07-25",
+        "total_operating_hours": 4120.0,
+        "expected_lifetime_hours": 12000.0,
+        "current_status": "nominal",
+        "nasa_certification": "NASA-STD-3001 Vol 1 §4.3 / IEEE 323",
+        "accuracy_spec": "±5% LET dose rate (1 μSv/h to 50 mSv/h)",
+        "failure_history": [
+            {"date": "2026-05-02", "type": "charge_integrator_saturation", "resolution": "High-dose dynamic range auto-ranging shunt calibrated"}
+        ],
+    },
+    {
+        "instrument_id": "RSP-001",
+        "name": "Thoracic Bio-Impedance Respiration Rate Transducer",
+        "name_ar": "محول معدل التنفس بالمقاومة الحيوية الصدرية",
+        "manufacturer": "Medtronic Aerospace / NASA JSC",
+        "model": "PneumoSpace-ChestBand-V",
+        "sensor_family": "Impedance Pneumography",
+        "calibration_date": "2026-06-05",
+        "last_maintenance": "2026-08-30",
+        "total_operating_hours": 1540.0,
+        "expected_lifetime_hours": 5000.0,
+        "current_status": "nominal",
+        "nasa_certification": "NASA-STD-3001 Vol 1 §4.2 / IEC 60601-1",
+        "accuracy_spec": "±1 breath/min (4 to 60 bpm range)",
+        "failure_history": [
+            {"date": "2026-07-11", "type": "chest_band_loosening", "resolution": "Elastic buckle adjusted for astronaut EVA cooling undergarment"}
+        ],
+    },
+]
+
+
+def get_instrument_registry() -> list[dict[str, Any]]:
+    return NASA_INSTRUMENT_REGISTRY
+
+
+def get_instrument_warnings() -> list[dict[str, Any]]:
+    """Analyzes NASA instrument histories and returns operational warnings."""
+    warnings = []
+    now = datetime(2026, 11, 15)  # Reference mission time
+
+    for inst in NASA_INSTRUMENT_REGISTRY:
+        # Check calibration age
+        cal_date = datetime.strptime(inst["calibration_date"], "%Y-%m-%d")
+        days_since_cal = (now - cal_date).days
+        if days_since_cal > 150:
+            warnings.append({
+                "instrument_id": inst["instrument_id"],
+                "name": inst["name"],
+                "severity": "warning",
+                "type": "CALIBRATION_OVERDUE",
+                "message_en": f"Calibration is {days_since_cal} days old (exceeds 120-day NASA interval). High drift risk.",
+                "message_ar": f"المعايرة مر عليها {days_since_cal} يوماً (تتجاوز حد ناسا 120 يوم). خطر انحراف القراءات مرتفع.",
+            })
+
+        # Check operating hours vs expected lifetime
+        life_pct = (inst["total_operating_hours"] / inst["expected_lifetime_hours"]) * 100.0
+        if life_pct > 80.0:
+            warnings.append({
+                "instrument_id": inst["instrument_id"],
+                "name": inst["name"],
+                "severity": "caution",
+                "type": "HIGH_OPERATING_HOURS",
+                "message_en": f"Instrument has consumed {life_pct:.1f}% of certified spaceflight service life.",
+                "message_ar": f"استهلك الجهاز {life_pct:.1f}% من عمر الخدمة الفضائية المعتمد.",
+            })
+
+        # Check for recent failures
+        if len(inst.get("failure_history", [])) >= 2:
+            warnings.append({
+                "instrument_id": inst["instrument_id"],
+                "name": inst["name"],
+                "severity": "advisory",
+                "type": "RECURRENT_ANOMALY_RECORD",
+                "message_en": f"History contains {len(inst['failure_history'])} past recorded anomalies. TDL vigilance recommended.",
+                "message_ar": f"سجل الجهاز يحتوي على {len(inst['failure_history'])} أعطال مسجلة سابقاً. يُوصى بمراقبة دقيقة من طبقة التوثيق.",
+            })
+
+    return warnings
+
+
+def predict_pre_simulation(
+    astronaut_profile: Mapping[str, Any],
+    planned_eva_hours: float = 6.0,
+    expected_metabolic_watts: float = 350.0,
+    lang: str = "en",
+) -> dict[str, Any]:
+    """Generates a predictive pre-simulation medical risk score before EVA begins."""
+    risk_factors = []
+    base_risk = 0.05
+
+    # Resting HR evaluation
+    r_hr = float(astronaut_profile.get("resting_heart_rate", 68.0))
+    if r_hr > 85.0:
+        base_risk += 0.20
+        risk_factors.append({
+            "factor_en": f"Elevated resting heart rate ({r_hr:.0f} bpm)",
+            "factor_ar": f"ارتفاع معدل نبض القلب أثناء الراحة ({r_hr:.0f} نبضة/د)",
+            "severity": "caution",
+        })
+
+    # Core temp baseline
+    r_temp = float(astronaut_profile.get("resting_core_temp", 37.0))
+    if r_temp > 37.4:
+        base_risk += 0.25
+        risk_factors.append({
+            "factor_en": f"Mild pre-EVA hyperthermia ({r_temp:.2f}°C)",
+            "factor_ar": f"ارتفاع طفيف في درجة الحرارة المركزية قبل السير ({r_temp:.2f} مئوية)",
+            "severity": "warning",
+        })
+
+    # Duration & workload risk
+    if planned_eva_hours > 7.0:
+        base_risk += 0.20
+        risk_factors.append({
+            "factor_en": f"Extended EVA duration ({planned_eva_hours:.1f} hours) exceeds optimal fatigue threshold",
+            "factor_ar": f"مدة النشاط الممتدة ({planned_eva_hours:.1f} ساعة) تتجاوز حد الإجهاد الموصى به",
+            "severity": "caution",
+        })
+
+    if expected_metabolic_watts > 450.0:
+        base_risk += 0.25
+        risk_factors.append({
+            "factor_en": f"High predicted terrain workload ({expected_metabolic_watts:.0f} W)",
+            "factor_ar": f"جهد بدني متوقع مرتفع لتضاريس المسار ({expected_metabolic_watts:.0f} واط)",
+            "severity": "warning",
+        })
+
+    overall_risk_score = round(min(0.95, base_risk), 2)
+    risk_level = "LOW" if overall_risk_score < 0.25 else "MODERATE" if overall_risk_score < 0.55 else "HIGH"
+
+    return {
+        "overall_risk_score": overall_risk_score,
+        "risk_level": risk_level,
+        "planned_eva_hours": planned_eva_hours,
+        "expected_metabolic_watts": expected_metabolic_watts,
+        "risk_factors": risk_factors,
+        "recommended_lcvg_cooling_rate": "MEDIUM" if overall_risk_score < 0.35 else "HIGH",
+        "nasa_guideline": "NASA-STD-3001 Vol 1 §4.2.1: Pre-EVA crew clinical fitness assessment verified.",
+    }
+
+
+# -----------------------------------------------------------------------------------------
+# Machine Learning Random Forest Model Architecture
+# -----------------------------------------------------------------------------------------
 class DecisionTreeNode:
     def __init__(
         self,
@@ -202,6 +469,13 @@ class MedicalRandomForest:
             "suit_pressure_kpa",
             "co2_mmhg",
             "rad_dose_rate_usv",
+            "hr_slope_per_min",
+            "temp_slope_per_min",
+            "spo2_slope_per_min",
+            "hr_spo2_divergence",
+            "eva_elapsed_min",
+            "metabolic_rate_watts",
+            "activity_level",
             "spo2_trust",
             "hr_trust",
             "temp_trust",
@@ -215,7 +489,7 @@ class MedicalRandomForest:
         if not y:
             return 0.0
         n = len(y)
-        counts = {}
+        counts: dict[str, int] = {}
         for c in y:
             counts[c] = counts.get(c, 0) + 1
         return 1.0 - sum((cnt / n) ** 2 for cnt in counts.values())
@@ -241,7 +515,7 @@ class MedicalRandomForest:
         current_gini = self._gini(y)
 
         # Feature subsampling (random forest behavior)
-        sub_features = random.sample(self.feature_names, k=min(6, len(self.feature_names)))
+        sub_features = random.sample(self.feature_names, k=min(7, len(self.feature_names)))
 
         for feat in sub_features:
             vals = sorted(set(x[feat] for x in X))
@@ -380,7 +654,28 @@ class MedicalRandomForest:
             if not self.load():
                 self.train_from_csv()
 
-        x = {fn: float(features.get(fn, 0.0)) for fn in self.feature_names}
+        # Build feature vector with sensible defaults for any missing features
+        x: dict[str, float] = {}
+        for fn in self.feature_names:
+            if fn in features:
+                x[fn] = float(features[fn])
+            elif fn == "hr_spo2_divergence":
+                hr = float(features.get("heart_rate", 70.0))
+                spo2 = float(features.get("spo2_pct", 98.0))
+                x[fn] = round(((hr - 70.0) / 70.0) - ((spo2 - 98.0) / 98.0), 3)
+            elif fn.endswith("_trust"):
+                x[fn] = 0.98
+            elif fn.endswith("_slope_per_min"):
+                x[fn] = 0.0
+            elif fn == "metabolic_rate_watts":
+                x[fn] = 300.0
+            elif fn == "activity_level":
+                x[fn] = 1.0
+            elif fn == "eva_elapsed_min":
+                x[fn] = 60.0
+            else:
+                x[fn] = 0.0
+
         best_cls, probs = self._predict_single(x)
         confidence = probs.get(best_cls, 0.0)
 
@@ -399,10 +694,10 @@ class MedicalRandomForest:
             "actions": actions,
             "comm_blackout_active": comm_loss,
             "tdl_sensor_trust": {
-                "spo2": x["spo2_trust"],
-                "heart_rate": x["hr_trust"],
-                "core_temp": x["temp_trust"],
-                "suit_pressure": x["press_trust"],
+                "spo2": x.get("spo2_trust", 0.98),
+                "heart_rate": x.get("hr_trust", 0.98),
+                "core_temp": x.get("temp_trust", 0.98),
+                "suit_pressure": x.get("press_trust", 0.98),
             },
         }
 

@@ -369,13 +369,17 @@ class PerseveranceRover {
     hga.rotation.x = 0.3;
     this.root.add(hga);
 
-    // Remote Sensing Mast (RSM)
+    // Remote Sensing Mast (RSM) with SuperCam & Mastcam-Z
     this.mast.position.set(-0.5, 1.0, 0.8);
     const mastPole = mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.2, 8), dark, 0, 0.6, 0);
     const mastHead = mesh(new THREE.BoxGeometry(0.28, 0.22, 0.25), white, 0, 1.25, 0);
     const superCamLens = mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.12, 12), lens, 0, 1.25, 0.14);
     superCamLens.rotation.x = Math.PI / 2;
-    this.mast.add(mastPole, mastHead, superCamLens);
+    const mastcamZLeft = mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.08, 10), lens, -0.09, 1.15, 0.13);
+    mastcamZLeft.rotation.x = Math.PI / 2;
+    const mastcamZRight = mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.08, 10), lens, 0.09, 1.15, 0.13);
+    mastcamZRight.rotation.x = Math.PI / 2;
+    this.mast.add(mastPole, mastHead, superCamLens, mastcamZLeft, mastcamZRight);
     this.root.add(this.mast);
 
     // Robotic Arm (with drill turret & PIXL/SHERLOC instruments)
@@ -383,7 +387,11 @@ class PerseveranceRover {
     armGroup.position.set(0.55, 0.65, 1.0);
     const arm1 = mesh(new THREE.BoxGeometry(0.08, 0.08, 0.6), dark, 0, 0, 0.3);
     const turret = mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.22, 12), gold, 0, -0.15, 0.6);
-    armGroup.add(arm1, turret);
+    // PIXL sensor head
+    const pixlHead = mesh(new THREE.BoxGeometry(0.09, 0.09, 0.14), dark, -0.1, -0.15, 0.65);
+    // SHERLOC spectrometer head
+    const sherlocHead = mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.12, 10), lens, 0.1, -0.15, 0.65);
+    armGroup.add(arm1, turret, pixlHead, sherlocHead);
     this.root.add(armGroup);
 
     // 6-Wheel Rocker-Bogie Suspension
@@ -1006,6 +1014,26 @@ export class MarsScene {
     const rtgLabel = labelSprite("RTG Power Unit", "#ffaa44");
     rtgLabel.position.set(rtgX, rtgGround + 1.6, -rtgY);
     g.add(rtgCyl, rtgLabel);
+
+    // 5. NASA MSL/RAD Active Planetary Surface Dosimeter
+    const radX = l.x + 12.0, radY = l.y + 2.0;
+    const radGround = this.heightAt(radX, radY);
+    const radBase = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.28, 0.45, 12), foil);
+    radBase.position.set(radX, radGround + 0.25, -radY);
+    const radDome = new THREE.Mesh(new THREE.SphereGeometry(0.18, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.5), white);
+    radDome.position.set(radX, radGround + 0.48, -radY);
+    const radLabel = labelSprite("NASA RAD Dosimeter (Hassler et al.)", "#f43f5e");
+    radLabel.position.set(radX, radGround + 1.1, -radY);
+    g.add(radBase, radDome, radLabel);
+
+    // 6. Geological Core Sample Staging Caching Depot
+    const depotX = l.x + 4.5, depotY = l.y + 11.0;
+    const depotGround = this.heightAt(depotX, depotY);
+    const depotBox = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.25, 0.4), dark);
+    depotBox.position.set(depotX, depotGround + 0.15, -depotY);
+    const depotLabel = labelSprite("Jezero Sample Return Depot", "#38bdf8");
+    depotLabel.position.set(depotX, depotGround + 0.8, -depotY);
+    g.add(depotBox, depotLabel);
 
     this.disposables.push(foil, white, dark, glowBlue);
   }

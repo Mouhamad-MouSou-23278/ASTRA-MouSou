@@ -48,7 +48,7 @@ class Settings(BaseSettings):
     public_base_url: str = ""
 
     # --- LLM (provider-agnostic; "local" is a deterministic offline engine) ---
-    llm_provider: str = "local"   # local | anthropic | openai_compatible
+    llm_provider: str = "local"   # local | openrouter | groq | gemini | anthropic | openai_compatible
     llm_model: str = ""           # empty -> provider default
     llm_base_url: str = ""        # openai_compatible only, e.g. http://localhost:11434/v1
     llm_api_key: str = ""         # openai_compatible only

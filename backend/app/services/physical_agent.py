@@ -219,16 +219,49 @@ class PhysicalAIAgent:
                 reply=reply, proposals=[], citations=citations
             )
 
-        # 5. Default General Physical Laboratory Guidance
+        # 5. General / Open-Ended Physical Sensor Engineering Query
+        # If an LLM provider is active (OpenRouter, Groq, Gemini, Claude, or local OpenAI),
+        # feed the entire live sensor catalog into the prompt so the AI can answer ANY question with ground truth!
+        llm = get_llm()
+        if llm:
+            try:
+                all_sensors = self.db.scalars(select(Sensor)).all()
+                catalog_summary = "\n".join(
+                    f"- {s.key} ({s.name}): Category={s.category}, Unit={s.unit}, Range=[{s.min_valid}, {s.max_valid}], Accuracy=±{s.accuracy}, MaxRate={s.max_rate_per_min}/min, Status={s.status}"
+                    for s in all_sensors
+                )
+                system_prompt = (
+                    "You are the senior NASA Flight Sensor & Instrumentation AI Engineer for the ASTRA Mars Mission. "
+                    "You have direct real-time telemetry access to all spaceflight sensors in the mission catalog.\n\n"
+                    f"LIVE SENSOR CATALOGUE:\n{catalog_summary}\n\n"
+                    "Standards Grounding: NASA-STD-3001 (Space Flight Human-System Standard), "
+                    "EVA-EXP-0034 (Exploration EVA System Technical Standards), and ASTRA Trusted Data Layer (TDL).\n"
+                    "Answer the engineer's question precisely, cite relevant flight sensor parameters, units, and safety bounds."
+                )
+                messages = []
+                if history:
+                    for h in history[-4:]:
+                        messages.append({"role": h.get("role", "user"), "content": h.get("content", "")})
+                messages.append({"role": "user", "content": message})
+
+                llm_reply = llm.complete(system_prompt, messages)
+                if llm_reply:
+                    citations.extend(NASA_CITATIONS[:3])
+                    return AgentChatResponse(reply=llm_reply, proposals=[], citations=citations)
+            except Exception:
+                pass  # Gracefully fall back to deterministic responses
+
+        # Fallback Deterministic Guidance
         citations.extend(NASA_CITATIONS[:3])
         reply = (
             "**ASTRA Physical Sensor Engineering Laboratory Assistant**\n\n"
-            "I can assist you with:\n"
+            "I have full access to the flight sensor catalog, physical channels, and failure models. You can ask me:\n"
             "1. **Sensor Specifications:** View, update, or optimize electrical, metrological, and physical specs.\n"
             "2. **Draft Proposals:** Propose new scientific sensor models grounded in NASA EVA standards.\n"
             "3. **Compliance Checking:** Benchmark sensors against **NASA-STD-3001** and **EVA-EXP-0034**.\n"
             "4. **Simulation & TDL:** Run isolated physics simulations and inspect residuals and Trust Scores.\n\n"
-            "To get started, ask about a specific sensor, request a new sensor proposal, or ask to evaluate standard compliance."
+            "To get started, ask about any specific sensor (e.g. `heart_rate`, `spo2`, `suit_pressure`, `co2_level`), "
+            "request a new sensor draft, or ask about calibration drift."
         )
         return AgentChatResponse(reply=reply, proposals=[], citations=citations)
 

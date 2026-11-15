@@ -28,110 +28,200 @@ export function SensorPlacementCanvas({
 }: PlacementProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const sensorMeshRef = useRef<THREE.Mesh | null>(null);
+  const sensorLightRef = useRef<THREE.PointLight | null>(null);
 
   useEffect(() => {
     const container = mountRef.current;
     if (!container) return;
 
     const width = container.clientWidth || 360;
-    const height = 260;
+    const height = 280;
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x1a1c22);
+    scene.background = new THREE.Color(0x0e1117);
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 50);
-    camera.position.set(0, 1.2, 2.5);
+    camera.position.set(0, 1.25, 2.6);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.2;
     container.appendChild(renderer.domElement);
 
-    // Lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+    // Dynamic Lighting
+    const ambientLight = new THREE.AmbientLight(0xdde8f5, 0.9);
     scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0xffeedd, 1.5);
-    dirLight.position.set(2, 4, 3);
+    const dirLight = new THREE.DirectionalLight(0xfff5ea, 1.6);
+    dirLight.position.set(3, 5, 4);
     scene.add(dirLight);
 
-    // Parent Body Representation (Astronaut Torso / Helmet / Limbs)
+    const rimLight = new THREE.DirectionalLight(0x4dc9f0, 0.8);
+    rimLight.position.set(-3, 2, -3);
+    scene.add(rimLight);
+
+    // Spacesuit Materials
     const suitMat = new THREE.MeshStandardMaterial({
-      color: 0x9fa8b3,
-      roughness: 0.6,
+      color: 0xe2e5ea,
+      roughness: 0.75,
+      metalness: 0.1,
     });
     const visorMat = new THREE.MeshStandardMaterial({
-      color: 0xe0ad4a,
-      roughness: 0.2,
-      metalness: 0.9,
+      color: 0xdfa032,
+      roughness: 0.15,
+      metalness: 0.95,
     });
     const darkMat = new THREE.MeshStandardMaterial({
-      color: 0x2a2d32,
-      roughness: 0.8,
+      color: 0x242830,
+      roughness: 0.65,
+      metalness: 0.5,
+    });
+    const orangeTrim = new THREE.MeshStandardMaterial({
+      color: 0xd95a2b,
+      roughness: 0.6,
+    });
+    const copperMat = new THREE.MeshStandardMaterial({
+      color: 0xb87333,
+      metalness: 0.8,
+      roughness: 0.3,
     });
 
     const bodyGroup = new THREE.Group();
     scene.add(bodyGroup);
 
-    // Torso
+    // Torso (Spacesuit Body)
     const torsoMesh = new THREE.Mesh(
-      new THREE.BoxGeometry(0.52, 0.62, 0.34),
+      new THREE.BoxGeometry(0.54, 0.64, 0.36),
       suitMat
     );
     torsoMesh.position.set(0, 1.0, 0);
     bodyGroup.add(torsoMesh);
 
-    // Chest unit
+    // Chest Telemetry & Life Support Unit (DCM / Display and Control Module)
     const chestMesh = new THREE.Mesh(
-      new THREE.BoxGeometry(0.3, 0.2, 0.06),
+      new THREE.BoxGeometry(0.32, 0.22, 0.08),
       darkMat
     );
-    chestMesh.position.set(0, 1.08, 0.19);
-    bodyGroup.add(chestMesh);
+    chestMesh.position.set(0, 1.08, 0.21);
 
-    // Backpack (PLSS)
+    // Telemetry OLED indicator screen on DCM
+    const oledMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.16, 0.08),
+      new THREE.MeshBasicMaterial({ color: 0x4dc9f0 })
+    );
+    oledMesh.position.set(0, 1.10, 0.252);
+    bodyGroup.add(chestMesh, oledMesh);
+
+    // Backpack (PLSS - Portable Life Support System)
     const packMesh = new THREE.Mesh(
-      new THREE.BoxGeometry(0.46, 0.66, 0.24),
+      new THREE.BoxGeometry(0.48, 0.70, 0.26),
       suitMat
     );
-    packMesh.position.set(0, 1.04, -0.28);
-    bodyGroup.add(packMesh);
+    packMesh.position.set(0, 1.05, -0.29);
+
+    // Oxygen cylinders on top of PLSS
+    const o2Cylinder = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.06, 0.06, 0.42, 12),
+      orangeTrim
+    );
+    o2Cylinder.rotation.z = Math.PI / 2;
+    o2Cylinder.position.set(0, 1.38, -0.28);
+    bodyGroup.add(packMesh, o2Cylinder);
+
+    // PLSS Umbilical Life-Support Conduits (Flexible Ribbed Hoses)
+    const curveL = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(0.18, 0.85, -0.26),
+      new THREE.Vector3(0.28, 0.92, -0.05),
+      new THREE.Vector3(0.20, 1.02, 0.21),
+    ]);
+    const tubeGeoL = new THREE.TubeGeometry(curveL, 16, 0.022, 8, false);
+    const tubeMeshL = new THREE.Mesh(tubeGeoL, darkMat);
+
+    const curveR = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(-0.18, 0.85, -0.26),
+      new THREE.Vector3(-0.28, 0.92, -0.05),
+      new THREE.Vector3(-0.20, 1.02, 0.21),
+    ]);
+    const tubeGeoR = new THREE.TubeGeometry(curveR, 16, 0.022, 8, false);
+    const tubeMeshR = new THREE.Mesh(tubeGeoR, darkMat);
+    bodyGroup.add(tubeMeshL, tubeMeshR);
 
     // Helmet & Visor
     const headGroup = new THREE.Group();
-    headGroup.position.set(0, 1.5, 0.02);
+    headGroup.position.set(0, 1.52, 0.02);
     const helmetMesh = new THREE.Mesh(
-      new THREE.SphereGeometry(0.23, 24, 18),
+      new THREE.SphereGeometry(0.24, 28, 22),
       suitMat
     );
     const visorMesh = new THREE.Mesh(
-      new THREE.SphereGeometry(0.2, 24, 18, 0, Math.PI * 2, 0, Math.PI * 0.62),
+      new THREE.SphereGeometry(0.21, 28, 22, 0, Math.PI * 2, 0, Math.PI * 0.65),
       visorMat
     );
     visorMesh.rotation.x = Math.PI / 2;
     visorMesh.position.set(0, 0, 0.07);
-    headGroup.add(helmetMesh, visorMesh);
+
+    // Helmet VHF/UHF Communications Antenna
+    const antPole = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.006, 0.006, 0.32, 6),
+      copperMat
+    );
+    antPole.position.set(0.19, 0.22, -0.08);
+    antPole.rotation.z = -0.2;
+
+    const antTip = new THREE.Mesh(
+      new THREE.SphereGeometry(0.015, 8, 8),
+      orangeTrim
+    );
+    antTip.position.set(0.22, 0.38, -0.08);
+
+    headGroup.add(helmetMesh, visorMesh, antPole, antTip);
     bodyGroup.add(headGroup);
 
-    // Arms
+    // Articulated Arms with Glove Rings
     const armL = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.08, 0.08, 0.5, 12),
+      new THREE.CylinderGeometry(0.085, 0.075, 0.52, 12),
       suitMat
     );
-    armL.position.set(0.35, 1.0, 0);
-    armL.rotation.z = -0.2;
-    const armR = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.08, 0.08, 0.5, 12),
-      suitMat
-    );
-    armR.position.set(-0.35, 1.0, 0);
-    armR.rotation.z = 0.2;
-    bodyGroup.add(armL, armR);
+    armL.position.set(0.36, 0.98, 0);
+    armL.rotation.z = -0.22;
 
-    // Ground platform grid
-    const grid = new THREE.GridHelper(3, 12, 0x445566, 0x223344);
-    grid.position.y = 0.4;
+    const cuffL = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.088, 0.088, 0.04, 12),
+      orangeTrim
+    );
+    cuffL.position.set(0.42, 0.74, 0);
+    cuffL.rotation.z = -0.22;
+
+    const armR = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.085, 0.075, 0.52, 12),
+      suitMat
+    );
+    armR.position.set(-0.36, 0.98, 0);
+    armR.rotation.z = 0.22;
+
+    const cuffR = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.088, 0.088, 0.04, 12),
+      orangeTrim
+    );
+    cuffR.position.set(-0.42, 0.74, 0);
+    cuffR.rotation.z = 0.22;
+
+    bodyGroup.add(armL, cuffL, armR, cuffR);
+
+    // Ground Platform Grid (Precision Engineering Plate)
+    const grid = new THREE.GridHelper(3.2, 16, 0x38bdf8, 0x1f2b3c);
+    grid.position.y = 0.35;
     scene.add(grid);
+
+    // Circular Holographic Telemetry Pedestal Ring
+    const ringGeo = new THREE.RingGeometry(0.6, 0.62, 32);
+    const ringMat = new THREE.MeshBasicMaterial({ color: 0x4dc9f0, side: THREE.DoubleSide });
+    const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+    ringMesh.rotation.x = Math.PI / 2;
+    ringMesh.position.y = 0.355;
+    scene.add(ringMesh);
 
     // Sensor Primitive Mesh
     const getGeometry = (sh: string) => {
@@ -139,28 +229,35 @@ export function SensorPlacementCanvas({
         case "box":
           return new THREE.BoxGeometry(0.08, 0.08, 0.08);
         case "sphere":
-          return new THREE.SphereGeometry(0.05, 16, 16);
+          return new THREE.SphereGeometry(0.05, 18, 18);
         case "capsule":
-          return new THREE.CapsuleGeometry(0.03, 0.08, 8, 12);
+          return new THREE.CapsuleGeometry(0.03, 0.08, 8, 14);
         case "disc":
-          return new THREE.CylinderGeometry(0.06, 0.06, 0.02, 16);
+          return new THREE.CylinderGeometry(0.065, 0.065, 0.02, 18);
         case "cylinder":
         default:
-          return new THREE.CylinderGeometry(0.04, 0.04, 0.09, 16);
+          return new THREE.CylinderGeometry(0.045, 0.045, 0.09, 18);
       }
     };
 
     const sensorMat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color(colorHex || "#3a86ff"),
-      roughness: 0.3,
-      metalness: 0.5,
+      color: new THREE.Color(colorHex || "#38bdf8"),
+      roughness: 0.25,
+      metalness: 0.8,
+      emissive: new THREE.Color(colorHex || "#38bdf8"),
+      emissiveIntensity: 0.35,
     });
 
     const sensorMesh = new THREE.Mesh(getGeometry(shape), sensorMat);
     bodyGroup.add(sensorMesh);
     sensorMeshRef.current = sensorMesh;
 
-    // Animation / Orbit loop
+    // Active Sensor Telemetry PointLight Glow
+    const sensorLight = new THREE.PointLight(colorHex || "#38bdf8", 1.8, 0.8);
+    sensorMesh.add(sensorLight);
+    sensorLightRef.current = sensorLight;
+
+    // Interactive Drag / Rotation
     let reqId = 0;
     let isDragging = false;
     let prevMouseX = 0;
@@ -183,12 +280,23 @@ export function SensorPlacementCanvas({
     window.addEventListener("mousemove", onMouseMove);
     window.addEventListener("mouseup", onMouseUp);
 
+    let clock = 0;
     const animate = () => {
       reqId = requestAnimationFrame(animate);
+      clock += 0.03;
+
       if (!isDragging) {
-        // Slow gentle idle rotation
-        bodyGroup.rotation.y += 0.003;
+        bodyGroup.rotation.y += 0.0035;
       }
+
+      // Breathing animation on torso
+      torsoMesh.scale.x = 1.0 + Math.sin(clock * 0.8) * 0.008;
+
+      // Telemetry pulse on sensor light
+      if (sensorLightRef.current) {
+        sensorLightRef.current.intensity = 1.2 + Math.sin(clock * 4.0) * 0.8;
+      }
+
       renderer.render(scene, camera);
     };
     animate();
@@ -210,7 +318,6 @@ export function SensorPlacementCanvas({
     const mesh = sensorMeshRef.current;
     if (!mesh) return;
 
-    // Anchor position based on parentBody + offset
     let basePosY = 1.08;
     let basePosZ = 0.22;
     let basePosX = 0.0;
@@ -236,7 +343,11 @@ export function SensorPlacementCanvas({
     mesh.scale.set(scale, scale, scale);
 
     if (mesh.material instanceof THREE.MeshStandardMaterial) {
-      mesh.material.color.set(colorHex || "#3a86ff");
+      mesh.material.color.set(colorHex || "#38bdf8");
+      mesh.material.emissive.set(colorHex || "#38bdf8");
+    }
+    if (sensorLightRef.current) {
+      sensorLightRef.current.color.set(colorHex || "#38bdf8");
     }
   }, [parentBody, posX, posY, posZ, rotX, rotY, rotZ, scale, colorHex]);
 
@@ -246,23 +357,29 @@ export function SensorPlacementCanvas({
         ref={mountRef}
         style={{
           width: "100%",
-          height: 260,
-          borderRadius: 6,
+          height: 280,
+          borderRadius: 8,
           overflow: "hidden",
           cursor: "grab",
+          background: "radial-gradient(circle at 50% 40%, rgba(30, 48, 72, 0.4), #080b10 80%)",
+          border: "1px solid var(--line-soft)",
         }}
       />
       <div
         style={{
           position: "absolute",
-          bottom: 6,
-          right: 8,
+          bottom: 8,
+          right: 10,
           fontSize: "0.72rem",
-          color: "#8899aa",
+          color: "var(--muted)",
           pointerEvents: "none",
+          background: "rgba(0,0,0,0.6)",
+          padding: "2px 8px",
+          borderRadius: 4,
+          backdropFilter: "blur(4px)",
         }}
       >
-        Click & drag to rotate view
+        🔄 Drag to rotate 3D spacesuit & sensor mount
       </div>
     </div>
   );

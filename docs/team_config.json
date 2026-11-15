@@ -1,0 +1,241 @@
+{
+  "_comment": "NASA Space Apps Challenge 2026 - Comprehensive Project & Team Configuration. Any unknown data is configured here and dynamically imported by presentation.html.",
+  "project": {
+    "name": "MUSO ASTRA",
+    "codename": "ASTRA-R",
+    "full_title": "Trustworthy Astronaut Health Monitoring and Offline Decision Support",
+    "arabic_title": "منصة أسترا: المراقبة الصحية الموثوقة لرواد الفضاء ودعم القرار دون اتصال",
+    "tagline": "A 3-layer trust architecture bridging the 22-minute Earth-Mars comms latency with deterministic sensor verification, physical reliability modeling, and 95.15% accurate clinical machine learning.",
+    "version": "2.5.0-Audited",
+    "date": "November 2026",
+    "context": "NASA Space Apps Challenge 2026",
+    "challenge": {
+      "title": "Create Health Monitoring Software for Astronauts on Space Missions",
+      "track": "Human Spaceflight & Deep Space Planetary Exploration",
+      "nasa_gap_reference": "NASA Human Research Roadmap Medical-701 & Med10 (Earth-Independent Medical Operations - EIMO)",
+      "target_environments": ["Mars Transit (Microgravity)", "Mars Surface - Jezero Crater (0.38G)"],
+      "standards_compliance": [
+        "NASA-STD-3001 Vol 1 Rev C (Crew Health)",
+        "NASA-STD-3001 Vol 2 Rev F (Human Factors, Habitability & Environmental Health - July 2026)",
+        "EVA-EXP-0034 (Exploration Extravehicular Activity Avionics Standards)",
+        "IEC 60751 (Callendar-Van Dusen Platinum Resistance Thermometry)"
+      ]
+    },
+    "links": {
+      "repository": "https://github.com/astra-spaceapps/astra-mars-health",
+      "live_demo": "http://localhost:8000",
+      "video_pitch": "https://youtu.be/your-spaceapps-pitch",
+      "documentation": "docs/PRESENTATION_GUIDE_AND_SCRIPT.md"
+    }
+  },
+  "team": {
+    "name": "ASTRA Pioneers",
+    "country_city": "[Your City, Your Country / Local Hackathon Event]",
+    "event_location": "NASA Space Apps Challenge 2026",
+    "supervision": "Simulated Multidisciplinary Research Board",
+    "members": [
+      {
+        "id": "member_1",
+        "name": "Omar",
+        "role": "Project Lead & Hardware Systems Researcher",
+        "discipline": "Aerospace Engineering & Spacecraft Photovoltaics",
+        "contributions": "Pioneered the Thin-Film Solar Helmet Feasibility Study, Radi-N2 neutron data analysis, and hardware energy budget modeling.",
+        "email": "omar@example.com",
+        "github": "https://github.com/omar-lead",
+        "linkedin": "https://linkedin.com/in/omar"
+      },
+      {
+        "id": "member_2",
+        "name": "Sondos Hammoud",
+        "role": "Biomedical Instrumentation & Reliability Lead",
+        "discipline": "Aerospace Medicine & Sensor Physics",
+        "contributions": "Authored the 45-page Physical Instrument Reliability Report, formulated the foundational axiom 'A plausible value is not a valid value', and modeled sensor fault physics.",
+        "email": "sondos@example.com",
+        "github": "https://github.com/sondos-hammoud",
+        "linkedin": "https://linkedin.com/in/sondos"
+      },
+      {
+        "id": "member_3",
+        "name": "[Fullstack Engineer Name]",
+        "role": "Fullstack Software & Telemetry Systems Architect",
+        "discipline": "Computer Science & Distributed Systems",
+        "contributions": "Engineered the FastAPI backend, WebSocket low-latency telemetry streaming, Doctor QR mobile pairing, and RBAC authentication.",
+        "email": "fullstack@example.com",
+        "github": "https://github.com/fullstack-engineer",
+        "linkedin": "https://linkedin.com/in/fullstack"
+      },
+      {
+        "id": "member_4",
+        "name": "[Medical AI / ML Lead Name]",
+        "role": "Medical AI & Machine Learning Lead",
+        "discipline": "Biomedical Informatics & Data Science",
+        "contributions": "Developed the 18-feature Random Forest clinical classifier trained on 10,000 NASA EVA records with 95.15% validation accuracy.",
+        "email": "medical-ai@example.com",
+        "github": "https://github.com/medical-ai",
+        "linkedin": "https://linkedin.com/in/medical-ai"
+      },
+      {
+        "id": "member_5",
+        "name": "[3D Simulation & Graphics Lead Name]",
+        "role": "3D Graphics & Martian Geospatial Specialist",
+        "discipline": "WebGL / Three.js & Aerospace Human Factors",
+        "contributions": "Constructed the 3D Mars Jezero Crater environment from authentic NASA HiRISE stereo elevation data, 3D suit anatomy, and Perseverance instruments.",
+        "email": "graphics@example.com",
+        "github": "https://github.com/graphics-specialist",
+        "linkedin": "https://linkedin.com/in/graphics"
+      }
+    ]
+  },
+  "physical_sensors_catalog": [
+    {
+      "name": "Electrocardiogram (ECG / EKG)",
+      "type": "Electrical Biopotential (Ag/AgCl, Dry & Capacitive)",
+      "physics_principle": "Detects cardiac dipole depolarization / repolarization potentials on skin surface (0.5 to 4 mV, 0.05–150 Hz).",
+      "spaceflight_problems": [
+        "Electrode contact impedance changes (5 kΩ to 100 kΩ) due to sweating and microgravity fluid shifts.",
+        "Adhesive detachment during EVA suit donning/doffing and vigorous movement.",
+        "Triboelectric cable noise and electromagnetic interference (EMI) from suit life-support blowers mimicking cardiac arrhythmias."
+      ],
+      "engineering_solutions": [
+        "Continuous electrode-contact impedance monitoring and lead-off flags.",
+        "Multi-lead cross-channel consistency checks (at least 2 independent leads).",
+        "Fluid-filled / capacitive electrodes with series current-limiting resistors (NASA Apollo bioinstrumentation heritage).",
+        "Motion-aware Signal Quality Indexing (SQI) fusing 3-axis accelerometer data."
+      ]
+    },
+    {
+      "name": "Photoplethysmography (PPG) / Pulse Oximeter",
+      "type": "Dual-Wavelength Optical Transducer (660 nm Red / 940 nm Infrared)",
+      "physics_principle": "Beer-Lambert Law (I = I0 * 10^(-εcl)); calculates modulation ratio R = (AC/DC)red / (AC/DC)ir to estimate arterial blood oxygen saturation (SpO2).",
+      "spaceflight_problems": [
+        "Severe peripheral vasoconstriction in extreme space temperatures (-120°C to +20°C) reduces peripheral perfusion.",
+        "Vigorous astronaut EVA motion corrupts optical path, causing false drops in SpO2 (e.g. 98% -> 64%).",
+        "Sensor displacement and ambient light interference."
+      ],
+      "engineering_solutions": [
+        "Perfusion-Index (PI) aware quality gating: reject epochs where pulsatile AC waveform is below signal threshold.",
+        "Cross-sensor physiological divergence: SpO2 drop must be accompanied by compensatory heart rate and respiration rate surge, otherwise flagged as probe artifact.",
+        "Multi-site optical sensing (earlobe, forehead, and finger)."
+      ]
+    },
+    {
+      "name": "Platinum Resistance Thermometer (RTD Pt100 / Pt1000)",
+      "type": "Thermodynamic Resistance Transducer (IEC 60751)",
+      "physics_principle": "Callendar-Van Dusen equation: R(T) = R0 * (1 + A*T + B*T^2) for positive temperatures.",
+      "spaceflight_problems": [
+        "Thermal lag across suit layers during extreme orbital day/night transitions (+120°C to -125°C).",
+        "Discrepancy between skin temperature and core body temperature (skin can be cool while core is in hyperthermia).",
+        "Leadwire severance from suit mechanical articulation joints causing open-circuit reading (-999°C)."
+      ],
+      "engineering_solutions": [
+        "IEC 60751 precision Pt1000 RTD with calibrated bridge circuit.",
+        "Metabolic work-rate coupled thermal model: core temperature estimated from skin RTD, heart rate, and LCVG heat rejection.",
+        "Redundant dual-sensor deployment (in-ear auditory canal thermistor + suit core RTD)."
+      ]
+    },
+    {
+      "name": "Vascular Doppler Ultrasound & Hemodynamic Monitor",
+      "type": "Acoustic / Piezoelectric Transducer",
+      "physics_principle": "High-frequency ultrasound (3.5–10 MHz) Doppler frequency shift measures blood flow velocity and vessel cross-sectional geometry.",
+      "spaceflight_problems": [
+        "Microgravity cephalad fluid shift (1.5–2.0 L) causes internal jugular vein (IJV) distension (circular geometry, venous pressure 9–19 mmHg).",
+        "Venous blood flow stasis and retrograde flow, fulfilling Virchow's triad and leading to occlusive thrombosis (documented on ISS).",
+        "Operator-dependent; requires manual transducer placement and expert scanning."
+      ],
+      "engineering_solutions": [
+        "Scheduled mission ultrasound protocol: Flight Days 30, 60, and 6 weeks pre-return (audited NASA standard).",
+        "Semi-continuous wearable hemodynamic proxies (thoracic bioimpedance and heart rate variability).",
+        "Autonomous Doppler velocity envelope processing to detect blood stasis without requiring immediate Earth review."
+      ]
+    },
+    {
+      "name": "Radiation Dosimeter Suite & Radioprotection",
+      "type": "Dual Detection: Superheated Tube Bubble Dosimeters & Silicon PIN Diodes",
+      "physics_principle": "Radi-N2 Bubble Detector: Freon micro-droplets suspended in polymer gel vaporize upon neutron interaction, forming visible counting bubbles. Silicon PIN Diode: Ionizing radiation creates electron-hole pairs, measuring real-time dose rate (mSv/h).",
+      "spaceflight_problems": [
+        "Galactic Cosmic Rays (GCR) and Solar Particle Events (SPE) deliver cumulative ionizing dose and acute flux (> 10 mSv/h).",
+        "Secondary neutrons generated inside spacecraft hull from cosmic ray collision.",
+        "Single-Event Upsets (SEU), Single-Event Latchup (SEL), and bit-flips in microcontroller registers."
+      ],
+      "engineering_solutions": [
+        "Radi-N2 verified passive bubble dosimeters for zero-power, electromagnetic-immune neutron field mapping.",
+        "Active silicon dosimeter with Triple Modular Redundancy (TMR) voting logic to filter single-event radiation spikes.",
+        "Automated EVA abort threshold (> 5 mSv/h acute rate commands immediate ingress to storm shelter)."
+      ]
+    },
+    {
+      "name": "NDIR Micro-Capnometer (Breathing Gas / CO2)",
+      "type": "Non-Dispersive Infrared Spectroscopy",
+      "physics_principle": "Infrared absorption at 4.26 μm wavelength specific to CO2 gas molecules.",
+      "spaceflight_problems": [
+        "High ambient spacecraft CO2 (2.0–4.0 mmHg vs 0.3 mmHg on Earth) causing chronic mild hypercapnia, headaches, and cerebral vasodilation.",
+        "Moisture and saliva droplet condensation fogging optical windows inside suit helmet.",
+        "LiOH / amine CO2 scrubber exhaustion during prolonged EVA."
+      ],
+      "engineering_solutions": [
+        "Heated optical window with hydrophobic coating to prevent condensation.",
+        "Dual-beam optical reference channel to eliminate zero-drift.",
+        "Continuous partial pressure monitoring with autonomous scrubber canister switch alert (> 12 mmHg)."
+      ]
+    }
+  ],
+  "nasa_data_resources": [
+    {
+      "id": "res_1",
+      "title": "Spaceflight Standard Measures (SSM)",
+      "repository": "NASA Human Research Program (HRP) / LSDA",
+      "url": "https://lsda.jsc.nasa.gov",
+      "doi_citation": "Hardy et al., npj Microgravity (2025) 11:78. DOI: 10.1038/s41526-025-00532-6",
+      "description": "Standardized longitudinal multi-system physiological datasets: cardiovascular, sensorimotor, bone, immune, and circadian metrics across spaceflight missions."
+    },
+    {
+      "id": "res_2",
+      "title": "NASA Human Research Roadmap (HRR) - Gap Medical-701 & Med10",
+      "repository": "NASA Human Research Program",
+      "url": "https://humanresearchroadmap.nasa.gov/Gaps/gap.aspx?i=716",
+      "description": "Defines the open capability gap for Earth-Independent Medical Operations (EIMO) and autonomous medical decision support during deep-space exploration."
+    },
+    {
+      "id": "res_3",
+      "title": "NASA Open Science Data Repository (OSDR / GeneLab)",
+      "repository": "NASA Ames Research Center",
+      "url": "https://osdr.nasa.gov",
+      "description": "Open-access spaceflight multi-omics, transcriptomics, cellular, and radiation biological datasets from Shuttle, ISS, and analog missions."
+    },
+    {
+      "id": "res_4",
+      "title": "NASA-STD-3001 Volumes 1 & 2 Space Flight Human-System Standards",
+      "repository": "NASA Technical Standards System",
+      "url": "https://standards.nasa.gov/node/237",
+      "description": "Volume 1 Revision C (Crew Health) and Volume 2 Revision F (14 July 2026 - Human Factors, Habitability, Environmental Health)."
+    },
+    {
+      "id": "res_5",
+      "title": "In-Flight Venous Thromboembolism Clinical Investigations",
+      "repository": "New England Journal of Medicine & JAMA Network Open",
+      "doi_citation": "Auñón-Chancellor et al., NEJM (2020) 382:89-90; Marshall-Goebel et al., JAMA Netw Open (2019) 2(11):e1915011",
+      "description": "Primary clinical evidence documenting internal jugular vein flow stasis, retrograde flow, and occlusive thrombosis aboard the International Space Station."
+    },
+    {
+      "id": "res_6",
+      "title": "Mars Science Laboratory (MSL/RAD) Surface Radiation Dataset",
+      "repository": "NASA Planetary Data System (PDS)",
+      "doi_citation": "Hassler et al., Science (2014) 343(6169):1244791",
+      "description": "Ground surface radiation measurements from Curiosity rover in Gale Crater establishing surface dose rates (0.64–0.67 mSv/day)."
+    },
+    {
+      "id": "res_7",
+      "title": "NASA HiRISE Stereo Digital Terrain Model (DTM 045994_1985)",
+      "repository": "NASA / USGS Astrogeology Science Center / University of Arizona",
+      "url": "https://www.uahirise.org/dtm/dtm.php?ID=ESP_045994_1985",
+      "description": "1 meter/pixel high-resolution 3D topography of Jezero Crater, Mars at the Perseverance rover Octavia E. Butler landing site."
+    },
+    {
+      "id": "res_8",
+      "title": "Radi-N2 Neutron Field Study on the International Space Station",
+      "repository": "Canadian Space Agency (CSA) & NASA",
+      "url": "https://www.asc-csa.gc.ca/eng/iss/radi-n2.asp",
+      "description": "Comprehensive neutron radiation characterization using bubble detectors to quantify secondary neutron equivalent dose across ISS modules."
+    }
+  ]
+}

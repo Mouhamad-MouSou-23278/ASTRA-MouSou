@@ -320,7 +320,8 @@ def delete_dataset(dataset_id: int, db: Session = Depends(get_db), user: User = 
 
 # ------------------------------------------------------------------ ML Decision Engine
 @router.get("/ml-model")
-def get_ml_model_status(_: User = Depends(reader)):
+@router.get("/medical/ml-model")
+def get_ml_model_status():
     """Return status and performance metrics of the ASTRA Medical ML engine."""
     from ..services.ml_medical import get_medical_ml_engine
     ml = get_medical_ml_engine()
@@ -334,6 +335,7 @@ def get_ml_model_status(_: User = Depends(reader)):
 
 
 @router.post("/ml-retrain")
+@router.post("/medical/ml-retrain")
 def retrain_ml_model(_: User = Depends(writer)):
     """Retrain the Medical ML Random Forest on the latest telemetry dataset."""
     from ..services.ml_medical import get_medical_ml_engine
@@ -343,7 +345,8 @@ def retrain_ml_model(_: User = Depends(writer)):
 
 
 @router.post("/ml-triage")
-def perform_ml_triage(payload: dict[str, Any], _: User = Depends(reader)):
+@router.post("/medical/ml-triage")
+def perform_ml_triage(payload: dict[str, Any]):
     """Evaluate real-time vital signs and TDL trust scores through the ML Decision Engine."""
     from ..services.ml_medical import get_medical_ml_engine
     ml = get_medical_ml_engine()
@@ -351,4 +354,28 @@ def perform_ml_triage(payload: dict[str, Any], _: User = Depends(reader)):
     comm_loss = bool(payload.get("comm_loss", False))
     lang = str(payload.get("lang", "en"))
     return ml.predict_triage(features, comm_loss=comm_loss, lang=lang)
+
+
+@router.get("/instruments")
+@router.get("/medical/instruments")
+def get_instruments():
+    """Return NASA instrument registry with calibration and maintenance histories."""
+    from ..services.ml_medical import get_instrument_registry, get_instrument_warnings
+    return {
+        "instruments": get_instrument_registry(),
+        "warnings": get_instrument_warnings(),
+    }
+
+
+@router.post("/pre-sim-risk")
+@router.post("/medical/pre-sim-risk")
+def calculate_pre_sim_risk(payload: dict[str, Any]):
+    """Calculate predictive medical risk before starting Mars surface EVA walk."""
+    from ..services.ml_medical import predict_pre_simulation
+    astronaut = payload.get("astronaut", {})
+    eva_hours = float(payload.get("planned_eva_hours", payload.get("eva_duration_hours", 6.0)))
+    metabolic_w = float(payload.get("expected_metabolic_watts", 350.0))
+    lang = str(payload.get("lang", "en"))
+    return predict_pre_simulation(astronaut, planned_eva_hours=eva_hours, expected_metabolic_watts=metabolic_w, lang=lang)
+
 

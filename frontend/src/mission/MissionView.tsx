@@ -1,12 +1,12 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Banner, Chip, ErrorBanner, fmtClock } from "../components/ui";
 import { api, type Access } from "../lib/api";
+import { useLanguage } from "../lib/i18n";
 import type { SessionDetail, SystemInfo } from "../lib/types";
 import { ChatPanel } from "./ChatPanel";
 import { MarsCanvas } from "./MarsCanvas";
 import { TelemetryPanel, TimelinePanel, WarningsPanel } from "./panels";
 import { useSessionStream, useStoreVersion, type SessionStore } from "./store";
-
 import { DoctorExaminerConsole } from "../components/DoctorExaminerConsole";
 import { QrModal } from "../pages/OperatorPage";
 
@@ -35,12 +35,6 @@ export function SessionStatusBar({ detail, store }: { detail: SessionDetail; sto
   );
 }
 
-/**
- * The shared live view used by the Test Operator console, the staff watch page
- * and the QR Instrument Viewer. It is strictly read-only: playback controls are
- * injected by the operator page through `header` and call RBAC-protected REST
- * endpoints. Camera, pinned charts and tabs are local view state.
- */
 export function MissionView({ sessionId, access, header }: {
   sessionId: string;
   access?: Access;
@@ -50,9 +44,29 @@ export function MissionView({ sessionId, access, header }: {
   const [tab, setTab] = useState<MobileTab>("warnings");
   const [info, setInfo] = useState<SystemInfo | null>(null);
   const [showQr, setShowQr] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [lang] = useLanguage();
+  const isAr = lang === "ar";
   useStoreVersion(store, 500);
 
-  useEffect(() => { api<SystemInfo>("/system/info").then(setInfo).catch(() => undefined); }, []);
+  useEffect(() => {
+    api<SystemInfo>("/system/info").then(setInfo).catch(() => undefined);
+  }, []);
+
+  // Listen for fullscreen change events and F11 key
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "F11") {
+        e.preventDefault();
+        setIsFullscreen((prev) => !prev);
+      }
+      if (e.key === "Escape" && isFullscreen) {
+        setIsFullscreen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [isFullscreen]);
 
   if (error) return <ErrorBanner error={error} />;
   if (!detail) return <div className="empty">Loading session…</div>;
@@ -62,20 +76,47 @@ export function MissionView({ sessionId, access, header }: {
       {header ? header({ detail, store }) : (
         <div className="page-head">
           <SessionStatusBar detail={detail} store={store} />
-          <div className="row" style={{ marginLeft: 16 }}>
+          <div className="row" style={{ marginLeft: 16, gap: 8 }}>
             <button className="btn sm primary" onClick={() => setShowQr(true)}>
               🩺 Dr / Examiner QR
+            </button>
+            <button
+              className="btn sm"
+              onClick={() => setIsFullscreen(!isFullscreen)}
+              title={isAr ? "شاشة كاملة (F11)" : "Toggle Fullscreen Presentation (F11)"}
+            >
+              {isFullscreen ? "🗗 Exit Fullscreen" : "⛶ Fullscreen"}
             </button>
           </div>
         </div>
       )}
+
       {showQr && <QrModal sessionId={sessionId} onClose={() => setShowQr(false)} />}
       {store.notice && <div className="notice-bar" role="alert">{store.notice}</div>}
       {info && info.ai.configured !== "local" && !info.ai.llm_available && (
         <Banner kind="warn">ASTRA AI is running on the local deterministic explainer: {info.ai.detail}</Banner>
       )}
-      <div className="mission" data-tab={tab}>
+
+      <div className={`mission ${isFullscreen ? "mission-fullscreen" : ""}`} data-tab={tab}>
         <MarsCanvas detail={detail} store={store} />
+
+        {/* Exit fullscreen button overlay */}
+        {isFullscreen && (
+          <button
+            className="btn sm solid-danger"
+            style={{
+              position: "fixed",
+              top: 14,
+              right: 14,
+              zIndex: 10000,
+              boxShadow: "0 2px 10px rgba(0,0,0,0.8)",
+            }}
+            onClick={() => setIsFullscreen(false)}
+          >
+            ✕ {isAr ? "إنهاء ملء الشاشة (ESC)" : "Exit Fullscreen (ESC)"}
+          </button>
+        )}
+
         <div className="mobile-tabs" role="tablist">
           <button role="tab" aria-selected={tab === "doctor"} className={`tab ${tab === "doctor" ? "active" : ""}`} onClick={() => setTab("doctor")} style={{ color: "#34d399", fontWeight: "bold" }}>
             🩺 Doctor Mode
@@ -86,6 +127,7 @@ export function MissionView({ sessionId, access, header }: {
             </button>
           ))}
         </div>
+
         {tab === "doctor" ? (
           <div className="side" style={{ gridColumn: "span 2" }}>
             <DoctorExaminerConsole detail={detail} store={store} />

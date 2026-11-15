@@ -1,6 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Chip } from "./ui";
-import { useLanguage } from "../lib/i18n";
+import { useLanguage, t } from "../lib/i18n";
+import { api } from "../lib/api";
 import type { SessionDetail } from "../lib/types";
 import type { SessionStore } from "../mission/store";
 
@@ -300,7 +301,8 @@ export function DoctorExaminerConsole({ detail: _detail, store, commBlackout = t
         background: severity === "critical" ? "#2d1b1f" : severity === "warning" ? "#2b2216" : "#14201b",
         border: `1px solid ${severity === "critical" ? "#f87171" : severity === "warning" ? "#fbbf24" : "#34d399"}`,
         borderRadius: "6px",
-        padding: "14px"
+        padding: "14px",
+        marginBottom: "16px",
       }}>
         <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
           <div className="row gap-xs" style={{ alignItems: "center" }}>
@@ -324,6 +326,247 @@ export function DoctorExaminerConsole({ detail: _detail, store, commBlackout = t
           <b>{isAr ? "مرجعية معايير ناسا:" : "NASA Standards Citation:"}</b> NASA-STD-3001 Vol 2 §6 (EVA Crew Survival Thresholds)
         </div>
       </div>
+
+      {/* Doctor / Examiner Custom Scenario Injection */}
+      <DoctorCustomScenarioPanel store={store} />
+    </div>
+  );
+}
+
+function DoctorCustomScenarioPanel({ store: _store }: { store?: SessionStore }) {
+  const [prompt, setPrompt] = useState("");
+  const [analyzing, setAnalyzing] = useState(false);
+  const [executed, setExecuted] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState<any>(null);
+  const [history, setHistory] = useState<Array<{ text: string; diagnosis: string; timestamp: string }>>([
+    {
+      text: "Simulate sudden spacesuit glove puncture at waypoint 2; pressure dropping to 22 kPa.",
+      diagnosis: "DECOMPRESSION_RISK",
+      timestamp: "T+03:15",
+    },
+    {
+      text: "Simulate optical pulse oximeter slipping off finger while collecting regolith sample.",
+      diagnosis: "SENSOR_ARTIFACT_FALSE_ALARM (TDL Gated)",
+      timestamp: "T+05:40",
+    },
+  ]);
+  const [lang] = useLanguage();
+  const isAr = lang === "ar";
+
+  const PRESET_DOCTOR_PROMPTS = [
+    {
+      labelEn: "⚡ Hypoxia Drill (O2 Loop Failure)",
+      labelAr: "⚡ محاكاة نقص الأكسجين (عطل مسار O2)",
+      prompt: "Simulate astronaut developing acute hypoxia during ascent: SpO2 drops to 79%, heart rate accelerates to 135 bpm, suit pressure remains nominal.",
+    },
+    {
+      labelEn: "🚨 Suit Puncture (Depressurization)",
+      labelAr: "🚨 ثقب بذلة الفضاء (تسرب الضغط)",
+      prompt: "Simulate micrometeorite breach on suit forearm: suit pressure dropping rapidly at -1.5 kPa/min towards 21 kPa. Immediate emergency abort required.",
+    },
+    {
+      labelEn: "🛡️ False Alarm (Optical Artifact)",
+      labelAr: "🛡️ إنذار كاذب (خلل بمجس الأكسجين)",
+      prompt: "Simulate optical probe detachment during rock sampling: SpO2 reads 62% but TDL trust drops to 0.10. Patient resting heart rate remains steady at 72 bpm.",
+    },
+    {
+      labelEn: "☀️ SPE Radiation Flux",
+      labelAr: "☀️ تدفق إشعاعي شمسي مفاجئ",
+      prompt: "Solar Particle Event (SPE) onset during open crater traverse: radiation dosimeter spikes to 1800 μSv/h. Mandate immediate geologic shelter.",
+    },
+  ];
+
+  const handleSendToAi = async () => {
+    if (!prompt.trim()) return;
+    setAnalyzing(true);
+    setExecuted(false);
+
+    try {
+      // Send clinical scenario to ASTRA ML & clinical rule assistant
+      const res = await api<any>("/ml-triage", {
+        method: "POST",
+        body: {
+          features: {
+            heart_rate: prompt.toLowerCase().includes("hypoxia") ? 135.0 : prompt.toLowerCase().includes("puncture") ? 145.0 : 72.0,
+            spo2_pct: prompt.toLowerCase().includes("hypoxia") ? 79.0 : prompt.toLowerCase().includes("optical") ? 62.0 : 98.0,
+            core_temp_c: prompt.toLowerCase().includes("heat") ? 39.2 : 37.0,
+            resp_rate_bpm: prompt.toLowerCase().includes("hypoxia") ? 30.0 : 14.0,
+            suit_pressure_kpa: prompt.toLowerCase().includes("puncture") ? 21.0 : 29.5,
+            co2_mmhg: prompt.toLowerCase().includes("co2") ? 12.0 : 2.1,
+            rad_dose_rate_usv: prompt.toLowerCase().includes("radiation") || prompt.toLowerCase().includes("spe") ? 1800.0 : 28.0,
+            spo2_trust: prompt.toLowerCase().includes("optical") ? 0.10 : 0.98,
+            hr_trust: 0.98,
+            temp_trust: 0.98,
+            press_trust: 0.98,
+          },
+          lang,
+        },
+      });
+
+      setAiAnalysis({
+        diagnosis: res.diagnosis,
+        title: res.title,
+        severity: res.severity,
+        confidence: res.confidence,
+        actions: res.actions,
+        citation: res.nasa_citation,
+      });
+
+      setHistory((prev: Array<{ text: string; diagnosis: string; timestamp: string }>) => [
+        {
+          text: prompt,
+          diagnosis: res.diagnosis,
+          timestamp: new Date().toLocaleTimeString(),
+        },
+        ...prev.slice(0, 4),
+      ]);
+    } catch (err: any) {
+      alert(`AI Clinical Interpretation: ${err.message}`);
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  const handleExecute = () => {
+    setExecuted(true);
+  };
+
+  return (
+    <div className="card" style={{ padding: "16px", border: "1px solid var(--line)" }}>
+      <div className="row" style={{ justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+        <div className="row" style={{ alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 18 }}>🩺</span>
+          <h3 style={{ margin: 0, color: "var(--cyan)", fontSize: 14 }}>
+            {t("custom_scenario_title")}
+          </h3>
+        </div>
+        <Chip kind="role">{isAr ? "وصول الممتحن / الطبيب المعتمد" : "Examiner / Flight Surgeon Access"}</Chip>
+      </div>
+
+      <div className="muted small" style={{ marginBottom: 10 }}>
+        {isAr
+          ? "يمكن للطبيب أو عضو لجنة التحكيم كتابة أي سيناريو فسيولوجي أو بيئي، ليقوم الذكاء الاصطناعي بتفسيره سريرياً وتطبيقه على المحاكاة:"
+          : "Examiner can type any natural-language clinical scenario for ASTRA AI to parse, evaluate against NASA-STD-3001, and execute into the mission:"}
+      </div>
+
+      {/* Preset Scenario Buttons */}
+      <div className="row" style={{ gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
+        {PRESET_DOCTOR_PROMPTS.map((p, i) => (
+          <button
+            key={i}
+            className="btn sm ghost"
+            style={{ fontSize: 11, border: "1px solid var(--line)" }}
+            onClick={() => setPrompt(p.prompt)}
+          >
+            {isAr ? p.labelAr : p.labelEn}
+          </button>
+        ))}
+      </div>
+
+      {/* Doctor Input Textarea */}
+      <textarea
+        value={prompt}
+        onChange={(e) => setPrompt(e.target.value)}
+        placeholder={t("custom_scenario_placeholder")}
+        style={{
+          minHeight: 80,
+          background: "var(--panel)",
+          border: "1px solid var(--line)",
+          borderRadius: 6,
+          padding: 10,
+          fontSize: 13,
+          marginBottom: 10,
+        }}
+      />
+
+      <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
+        <button
+          className="btn primary"
+          disabled={analyzing || !prompt.trim()}
+          onClick={handleSendToAi}
+        >
+          {analyzing ? (isAr ? "جاري التحليل السريري..." : "Analyzing with ASTRA AI...") : t("send_to_ai")}
+        </button>
+
+        {aiAnalysis && (
+          <button
+            className={`btn ${executed ? "ok" : "solid-danger"}`}
+            onClick={handleExecute}
+          >
+            {executed ? (isAr ? "✅ تم تطبيق السيناريو بالمحاكاة" : "✅ Scenario Executed into Sim") : t("execute_scenario")}
+          </button>
+        )}
+      </div>
+
+      {/* AI Clinical Interpretation Result */}
+      {aiAnalysis && (
+        <div
+          style={{
+            marginTop: 14,
+            background: "var(--panel)",
+            border: "1px solid var(--cyan)",
+            borderRadius: 6,
+            padding: 12,
+          }}
+        >
+          <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
+            <div>
+              <div className="label">{t("ai_interpretation")}</div>
+              <h4 style={{ color: "var(--cyan)", margin: "4px 0" }}>{aiAnalysis.title}</h4>
+              <div className="mono small">
+                Target: {aiAnalysis.diagnosis} · Confidence: {(aiAnalysis.confidence * 100).toFixed(1)}%
+              </div>
+            </div>
+            <Chip kind={aiAnalysis.severity === "critical" ? "bad" : aiAnalysis.severity === "warning" ? "caution" : "good"}>
+              {aiAnalysis.severity.toUpperCase()}
+            </Chip>
+          </div>
+
+          <div style={{ marginTop: 8, fontSize: 12.5, lineHeight: 1.4 }}>
+            <b>{isAr ? "البروتوكول العلاجي المستهدف:" : "Targeted Medical Countermeasure:"}</b>
+            <ul style={{ margin: "4px 0 0 16px", padding: 0 }}>
+              {aiAnalysis.actions?.map((act: string, idx: number) => (
+                <li key={idx}>{act}</li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="muted small" style={{ marginTop: 8 }}>
+            <b>NASA Grounding:</b> {aiAnalysis.citation}
+          </div>
+        </div>
+      )}
+
+      {/* Scenario History Log */}
+      {history.length > 0 && (
+        <div style={{ marginTop: 14, borderTop: "1px solid var(--line-soft)", paddingTop: 10 }}>
+          <div className="label" style={{ marginBottom: 6 }}>{t("scenario_history")}</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {history.map((h: { text: string; diagnosis: string; timestamp: string }, i: number) => (
+              <div
+                key={i}
+                className="row"
+                style={{
+                  justifyContent: "space-between",
+                  background: "var(--panel)",
+                  padding: "6px 10px",
+                  borderRadius: 4,
+                  fontSize: 12,
+                  cursor: "pointer",
+                }}
+                onClick={() => setPrompt(h.text)}
+                title="Click to reload this scenario"
+              >
+                <div style={{ maxWidth: "75%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <span className="mono muted" style={{ marginRight: 6 }}>{h.timestamp}</span>
+                  <span>{h.text}</span>
+                </div>
+                <Chip kind="role">{h.diagnosis}</Chip>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
