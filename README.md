@@ -252,3 +252,15 @@ npm --prefix frontend run build
 ## ⚖️ Compliance & Safety Notice
 
 ASTRA is an advanced research and engineering demonstration platform. Astronaut profiles are synthetic, physiological dynamics are spaceflight engineering approximations conforming to NASA-STD-3001, and simulated anomalies are modeled for technical demonstration. ASTRA is not certified as an operational medical device for Earth clinical practice.
+
+---
+## 📢 Demo Deployment
+
+A live demo of the full ASTRA platform is publicly accessible at:
+
+> **https://astra-mousou.onrender.com**
+
+**Important note:** This demo is hosted on Render’s free tier and may experience cold‑starts or brief downtime after periods of inactivity. It is intended for evaluation and demonstration purposes only; do not rely on it for production‑grade reliability.
+
+Feel free to explore the UI, run the simulation scenarios, and test the QR‑code workflow. For a more stable environment you can deploy the project yourself following the Netlify deployment guide in this repository.
+---
