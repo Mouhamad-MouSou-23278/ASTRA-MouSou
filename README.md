@@ -1,3 +1,7 @@
+Project Deployment Notice
+Demo Preview: You can test and review the live version of the project here:
+👉 https://astra-mousou.onrender.com
+
 # ASTRA — Autonomous Astronaut Health Monitoring & Mars Mission Simulation
 
 
